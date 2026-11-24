@@ -1,40 +1,33 @@
 import SwiftUI
-import SwiftData
 
 struct CollectionsView: View {
-    enum Scope: String, CaseIterable, Identifiable {
-        case mine = "Мои", discover = "Открытия"
-        var id: String { rawValue }
+    var body: some View {
+        ViewModelHost(make: { $0.makeCollectionsViewModel() }) { CollectionsContent(model: $0) }
     }
+}
 
-    @Environment(AppSession.self) private var session
-    @Query(sort: \MovieCollection.createdAt, order: .reverse) private var all: [MovieCollection]
-    @State private var scope: Scope = .mine
+private struct CollectionsContent: View {
+    @Bindable var model: CollectionsViewModel
     @State private var showEditor = false
-
-    private var myID: UUID? { session.currentUser?.id }
-    private var mine: [MovieCollection] { all.filter { $0.owner?.id == myID } }
-    /// Публичные подборки других пользователей.
-    private var others: [MovieCollection] { all.filter { $0.isPublic && $0.owner != nil && $0.owner?.id != myID } }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    Picker("Раздел", selection: $scope) {
-                        ForEach(Scope.allCases) { Text($0.rawValue).tag($0) }
+                    Picker("Раздел", selection: $model.scope) {
+                        ForEach(CollectionsViewModel.Scope.allCases) { Text($0.rawValue).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
 
-                    let list = scope == .mine ? mine : others
+                    let list = model.visible
                     if list.isEmpty {
                         emptyState.padding(.top, 40)
                     } else {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
                             ForEach(list) { c in
                                 NavigationLink(value: c) {
-                                    CollectionCard(collection: c, showOwner: scope == .discover)
+                                    CollectionCard(collection: c, showOwner: model.scope == .discover)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -56,7 +49,7 @@ struct CollectionsView: View {
 
     @ViewBuilder
     private var emptyState: some View {
-        if scope == .mine {
+        if model.scope == .mine {
             ContentUnavailableView {
                 Label("Пока нет подборок", systemImage: "rectangle.stack.badge.plus")
             } description: {

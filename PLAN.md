@@ -71,11 +71,11 @@ Views (SwiftUI)  →  ViewModels (@Observable, @MainActor)  →  Services/Reposi
 - [ ] Отдельная схема Debug/Release, секреты только через `Secrets.xcconfig`
 
 ### Этап 1 — Рефакторинг слоёв (≈ 3–4 дня)
-- [ ] Ввести протоколы `AuthProvider`, `CollectionRepository`
-- [ ] ViewModel для Feed/Search (debounce, отмена, пагинация, состояния loading/error/empty)
-- [ ] ViewModel для Collections/Detail/Editor
-- [ ] DI-контейнер вместо создания сервисов во Views
-- [ ] Unit-тесты на сервисы и VM (моки каталога/репозитория)
+- [x] Ввести протоколы `AuthProvider`, `CollectionRepository` (`Domain/Protocols.swift`; `LocalAuthProvider`, `LocalCollectionRepository`)
+- [x] ViewModel для Feed/Search (`MovieListModel`: debounce, отмена, пагинация, состояния loading/error/empty)
+- [x] ViewModel для Collections/Detail/Editor/SaveSheet (`ViewModels/`)
+- [x] DI-контейнер вместо создания сервисов во Views (`AppDependencies`, `ViewModelHost`)
+- [x] Unit-тесты на сервисы и VM (23 теста)
 
 ### Этап 2 — Профили, оценки, отзывы + качество (≈ 1–1,5 недели)
 - [ ] Кэш каталога и изображений, офлайн-состояние

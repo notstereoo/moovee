@@ -73,15 +73,16 @@ final class CineBoardTests: XCTestCase {
     func testCreateAddRemoveNoDuplicates() throws {
         let s = makeSession()
         try s.register(username: "dave", password: "password1")
-        let svc = CollectionService(context: context, user: s.currentUser!)
-        let c = try svc.create(title: "Любимое", details: "", isPublic: true)
-        try svc.add(movie(1), to: c)
-        try svc.add(movie(1), to: c)
+        let me = s.currentUser!
+        let repo = LocalCollectionRepository(context: context)
+        let c = try repo.create(title: "Любимое", details: "", isPublic: true, as: me)
+        try repo.add(movie(1), to: c, as: me)
+        try repo.add(movie(1), to: c, as: me)
         XCTAssertEqual(c.items.count, 1)
-        try svc.add(movie(2), to: c)
-        try svc.remove(movieID: 1, from: c)
+        try repo.add(movie(2), to: c, as: me)
+        try repo.remove(movieID: 1, from: c, as: me)
         XCTAssertEqual(c.items.map(\.movieID), [2])
-        XCTAssertThrowsError(try svc.create(title: "   ", details: "", isPublic: true)) {
+        XCTAssertThrowsError(try repo.create(title: "   ", details: "", isPublic: true, as: me)) {
             XCTAssertEqual($0 as? CollectionError, .emptyTitle)
         }
     }
@@ -89,11 +90,12 @@ final class CineBoardTests: XCTestCase {
     func testSameMovieInSeveralCollections() throws {
         let s = makeSession()
         try s.register(username: "erin", password: "password1")
-        let svc = CollectionService(context: context, user: s.currentUser!)
-        let a = try svc.create(title: "A", details: "", isPublic: true)
-        let b = try svc.create(title: "B", details: "", isPublic: false)
-        try svc.add(movie(7), to: a)
-        try svc.add(movie(7), to: b)
+        let me = s.currentUser!
+        let repo = LocalCollectionRepository(context: context)
+        let a = try repo.create(title: "A", details: "", isPublic: true, as: me)
+        let b = try repo.create(title: "B", details: "", isPublic: false, as: me)
+        try repo.add(movie(7), to: a, as: me)
+        try repo.add(movie(7), to: b, as: me)
         XCTAssertEqual(a.items.count, 1)
         XCTAssertEqual(b.items.count, 1)
     }
@@ -102,15 +104,18 @@ final class CineBoardTests: XCTestCase {
         let s = makeSession()
         try s.register(username: "owner1", password: "password1")
         let owner = s.currentUser!
-        let c = try CollectionService(context: context, user: owner).create(title: "Моя", details: "", isPublic: true)
+        let repo = LocalCollectionRepository(context: context)
+        let c = try repo.create(title: "Моя", details: "", isPublic: true, as: owner)
 
         try s.register(username: "intruder", password: "password1")
-        let other = CollectionService(context: context, user: s.currentUser!)
-        XCTAssertThrowsError(try other.update(c, title: "Взлом", details: "", isPublic: false)) {
+        let other = s.currentUser!
+        XCTAssertThrowsError(try repo.update(c, title: "Взлом", details: "", isPublic: false, as: other)) {
             XCTAssertEqual($0 as? CollectionError, .notOwner)
         }
-        XCTAssertThrowsError(try other.delete(c)) { XCTAssertEqual($0 as? CollectionError, .notOwner) }
-        XCTAssertThrowsError(try other.add(movie(), to: c)) { XCTAssertEqual($0 as? CollectionError, .notOwner) }
+        XCTAssertThrowsError(try repo.delete(c, as: other)) { XCTAssertEqual($0 as? CollectionError, .notOwner) }
+        XCTAssertThrowsError(try repo.add(movie(), to: c, as: other)) {
+            XCTAssertEqual($0 as? CollectionError, .notOwner)
+        }
         XCTAssertEqual(c.title, "Моя")
     }
 
@@ -118,14 +123,31 @@ final class CineBoardTests: XCTestCase {
         let s = makeSession()
         try s.register(username: "frank", password: "password1")
         let frank = s.currentUser!
-        let svc = CollectionService(context: context, user: frank)
-        _ = try svc.create(title: "Публичная", details: "", isPublic: true)
-        _ = try svc.create(title: "Приватная", details: "", isPublic: false)
+        let repo = LocalCollectionRepository(context: context)
+        _ = try repo.create(title: "Публичная", details: "", isPublic: true, as: frank)
+        _ = try repo.create(title: "Приватная", details: "", isPublic: false, as: frank)
 
         try s.register(username: "grace", password: "password1")
         XCTAssertEqual(frank.collections(visibleTo: s.currentUser).map(\.title), ["Публичная"])
         XCTAssertEqual(frank.collections(visibleTo: frank).count, 2)
         XCTAssertEqual(frank.collections(visibleTo: nil).count, 1)
+    }
+
+    func testRepositoryQueriesAndRevision() throws {
+        DemoSeeder.seedIfNeeded(context)
+        let s = makeSession()
+        try s.register(username: "henry", password: "password1")
+        let me = s.currentUser!
+        let repo = LocalCollectionRepository(context: context)
+        XCTAssertEqual(repo.revision, 0)
+        _ = try repo.create(title: "Моя", details: "", isPublic: true, as: me)
+        _ = try repo.create(title: "Скрытая", details: "", isPublic: false, as: me)
+        XCTAssertEqual(repo.revision, 2)
+        XCTAssertEqual(repo.collections(ownedBy: me).count, 2)
+        // Чужие: 3 публичных демо-подборки; приватные демо и свои не попадают.
+        let others = repo.publicCollections(excluding: me)
+        XCTAssertEqual(others.count, 3)
+        XCTAssertTrue(others.allSatisfy { $0.isPublic && $0.owner?.id != me.id })
     }
 
     func testDemoSeedHasPrivateCollectionHiddenFromViewer() throws {

@@ -42,26 +42,17 @@ enum PasswordHasher {
     }
 }
 
-/// Текущая сессия. Аккаунты локальные (см. README → ограничения).
-@MainActor @Observable
-final class AppSession {
-    private(set) var currentUser: UserAccount?
-    private let context: ModelContext
-    private let defaults: UserDefaults
-    private static let sessionKey = "session.userID"
-
-    init(context: ModelContext, defaults: UserDefaults = .standard) {
-        self.context = context
-        self.defaults = defaults
-        restore()
-    }
+/// Локальные аккаунты в SwiftData (см. README → ограничения).
+@MainActor
+struct LocalAuthProvider: AuthProvider {
+    let context: ModelContext
 
     static func isValid(username: String) -> Bool {
         username.range(of: "^[a-z0-9_]{3,20}$", options: .regularExpression) != nil
     }
 
-    func register(username raw: String, password: String) throws {
-        let name = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    func register(username raw: String, password: String) throws -> UserAccount {
+        let name = Self.normalized(raw)
         guard Self.isValid(username: name) else { throw AuthError.invalidUsername }
         guard password.count >= 8 else { throw AuthError.weakPassword }
         guard try findUser(named: name) == nil else { throw AuthError.usernameTaken }
@@ -72,17 +63,71 @@ final class AppSession {
             passwordHash: PasswordHasher.hash(password, salt: salt),
             salt: salt)
         context.insert(user)
-        do { try context.save() } catch { context.rollback(); throw AuthError.storage }
-        start(user)
+        do { try context.save() } catch {
+            context.rollback()
+            throw AuthError.storage
+        }
+        return user
     }
 
-    func login(username raw: String, password: String) throws {
-        let name = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    func login(username raw: String, password: String) throws -> UserAccount {
+        let name = Self.normalized(raw)
         guard let user = try findUser(named: name), !user.isDemo,
             let hash = user.passwordHash, let salt = user.salt,
             PasswordHasher.constantTimeEqual(hash, PasswordHasher.hash(password, salt: salt))
         else { throw AuthError.invalidCredentials }
-        start(user)
+        return user
+    }
+
+    func user(id: UUID) -> UserAccount? {
+        let descriptor = FetchDescriptor<UserAccount>(predicate: #Predicate { $0.id == id })
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    func updateBio(_ bio: String, for user: UserAccount) throws {
+        user.bio = String(bio.trimmingCharacters(in: .whitespacesAndNewlines).prefix(160))
+        do { try context.save() } catch {
+            context.rollback()
+            throw AuthError.storage
+        }
+    }
+
+    private static func normalized(_ raw: String) -> String {
+        raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func findUser(named name: String) throws -> UserAccount? {
+        do {
+            let descriptor = FetchDescriptor<UserAccount>(predicate: #Predicate { $0.username == name })
+            return try context.fetch(descriptor).first
+        } catch { throw AuthError.storage }
+    }
+}
+
+/// Текущая сессия: кто вошёл, и запоминание входа между запусками. Сами аккаунты хранит `AuthProvider`.
+@MainActor @Observable
+final class AppSession {
+    private(set) var currentUser: UserAccount?
+    @ObservationIgnored private let auth: any AuthProvider
+    @ObservationIgnored private let defaults: UserDefaults
+    private static let sessionKey = "session.userID"
+
+    init(auth: any AuthProvider, defaults: UserDefaults = .standard) {
+        self.auth = auth
+        self.defaults = defaults
+        restore()
+    }
+
+    convenience init(context: ModelContext, defaults: UserDefaults = .standard) {
+        self.init(auth: LocalAuthProvider(context: context), defaults: defaults)
+    }
+
+    func register(username: String, password: String) throws {
+        start(try auth.register(username: username, password: password))
+    }
+
+    func login(username: String, password: String) throws {
+        start(try auth.login(username: username, password: password))
     }
 
     func logout() {
@@ -92,8 +137,7 @@ final class AppSession {
 
     func updateBio(_ bio: String) throws {
         guard let user = currentUser else { return }
-        user.bio = String(bio.trimmingCharacters(in: .whitespacesAndNewlines).prefix(160))
-        do { try context.save() } catch { context.rollback(); throw AuthError.storage }
+        try auth.updateBio(bio, for: user)
     }
 
     private func start(_ user: UserAccount) {
@@ -103,14 +147,6 @@ final class AppSession {
 
     private func restore() {
         guard let raw = defaults.string(forKey: Self.sessionKey), let id = UUID(uuidString: raw) else { return }
-        let descriptor = FetchDescriptor<UserAccount>(predicate: #Predicate { $0.id == id })
-        currentUser = (try? context.fetch(descriptor))?.first
-    }
-
-    private func findUser(named name: String) throws -> UserAccount? {
-        do {
-            let descriptor = FetchDescriptor<UserAccount>(predicate: #Predicate { $0.username == name })
-            return try context.fetch(descriptor).first
-        } catch { throw AuthError.storage }
+        currentUser = auth.user(id: id)
     }
 }
