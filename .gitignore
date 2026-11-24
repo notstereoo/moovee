@@ -1,0 +1,7 @@
+Config/Secrets.xcconfig
+Config/Info.plist
+*.xcodeproj
+xcuserdata/
+DerivedData/
+build/
+.DS_Store
