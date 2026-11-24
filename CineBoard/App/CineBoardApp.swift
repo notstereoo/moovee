@@ -10,6 +10,14 @@ struct CineBoardApp: App {
         // Постеры кэшируются на диске: ленты и профили открываются без повторной загрузки.
         URLCache.shared = URLCache(memoryCapacity: 64 << 20, diskCapacity: 300 << 20)
         do {
+            #if DEBUG
+                if UITestSupport.isActive {
+                    let (container, deps) = try UITestSupport.makeDependencies()
+                    self.container = container
+                    _dependencies = State(initialValue: deps)
+                    return
+                }
+            #endif
             let container = try AppSchema.makeContainer()
             DemoSeeder.seedIfNeeded(container.mainContext)
             self.container = container

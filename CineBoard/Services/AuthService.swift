@@ -7,11 +7,11 @@ enum AuthError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .invalidUsername: "Имя пользователя: 3–20 символов, латинские буквы, цифры и «_»."
-        case .weakPassword: "Пароль должен содержать не менее 8 символов."
-        case .usernameTaken: "Это имя уже занято. Выберите другое."
-        case .invalidCredentials: "Неверное имя пользователя или пароль."
-        case .storage: "Не удалось сохранить данные на устройстве. Повторите попытку."
+        case .invalidUsername: String(localized: "Имя пользователя: 3–20 символов, латинские буквы, цифры и «_».")
+        case .weakPassword: String(localized: "Пароль должен содержать не менее 8 символов.")
+        case .usernameTaken: String(localized: "Это имя уже занято. Выберите другое.")
+        case .invalidCredentials: String(localized: "Неверное имя пользователя или пароль.")
+        case .storage: String(localized: "Не удалось сохранить данные на устройстве. Повторите попытку.")
         }
     }
 }

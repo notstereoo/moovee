@@ -6,8 +6,8 @@ enum FavoritesError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .limitReached: "В любимых может быть не больше \(FavoritesRules.limit) фильмов. Уберите один, чтобы добавить новый."
-        case .saveFailed: "Не удалось сохранить изменения. Повторите попытку."
+        case .limitReached: String(localized: "В любимых может быть не больше \(FavoritesRules.limit) фильмов. Уберите один, чтобы добавить новый.")
+        case .saveFailed: String(localized: "Не удалось сохранить изменения. Повторите попытку.")
         }
     }
 }

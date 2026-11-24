@@ -12,12 +12,12 @@ enum TMDBError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .missingKey: "Не задан ключ TMDB. Добавьте его в Config/Secrets.xcconfig (см. README)."
-        case .invalidKey: "Ключ TMDB не принят. Проверьте значение в Config/Secrets.xcconfig."
-        case .offline: "Нет соединения с интернетом. Проверьте сеть и повторите."
-        case .rateLimited: "Каталог временно ограничил запросы. Подождите немного и повторите."
-        case .server(let code): "Каталог временно недоступен (код \(code)). Повторите позже."
-        case .badResponse, .decoding: "Не удалось разобрать ответ каталога. Повторите позже."
+        case .missingKey: String(localized: "Не задан ключ TMDB. Добавьте его в Config/Secrets.xcconfig (см. README).")
+        case .invalidKey: String(localized: "Ключ TMDB не принят. Проверьте значение в Config/Secrets.xcconfig.")
+        case .offline: String(localized: "Нет соединения с интернетом. Проверьте сеть и повторите.")
+        case .rateLimited: String(localized: "Каталог временно ограничил запросы. Подождите немного и повторите.")
+        case .server(let code): String(localized: "Каталог временно недоступен (код \(code)). Повторите позже.")
+        case .badResponse, .decoding: String(localized: "Не удалось разобрать ответ каталога. Повторите позже.")
         }
     }
 }

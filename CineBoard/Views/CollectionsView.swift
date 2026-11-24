@@ -15,7 +15,7 @@ private struct CollectionsContent: View {
             ScrollView {
                 VStack(spacing: 16) {
                     Picker("Раздел", selection: $model.scope) {
-                        ForEach(CollectionsViewModel.Scope.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(CollectionsViewModel.Scope.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)

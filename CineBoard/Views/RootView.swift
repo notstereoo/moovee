@@ -25,8 +25,15 @@ struct MainTabView: View {
 
 struct AuthView: View {
     enum Mode: String, CaseIterable, Identifiable {
-        case login = "Вход", register = "Регистрация"
+        case login, register
         var id: String { rawValue }
+
+        var title: LocalizedStringResource {
+            switch self {
+            case .login: "Вход"
+            case .register: "Регистрация"
+            }
+        }
     }
 
     @Environment(AppSession.self) private var session
@@ -34,6 +41,14 @@ struct AuthView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var errorMessage: String?
+
+    /// В UI-тестах подсказка «надёжный пароль» перехватывает фокус и ломает ввод.
+    private var passwordContentType: UITextContentType? {
+        #if DEBUG
+            if UITestSupport.isActive { return nil }
+        #endif
+        return mode == .login ? .password : .newPassword
+    }
 
     var body: some View {
         ScrollView {
@@ -44,7 +59,7 @@ struct AuthView: View {
                     .foregroundStyle(.secondary).multilineTextAlignment(.center)
 
                 Picker("Режим", selection: $mode) {
-                    ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(Mode.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: mode) { errorMessage = nil }
@@ -56,7 +71,7 @@ struct AuthView: View {
                         .textContentType(.username)
                         .textFieldStyle(.roundedBorder)
                     SecureField(mode == .register ? "Пароль (от 8 символов)" : "Пароль", text: $password)
-                        .textContentType(mode == .login ? .password : .newPassword)
+                        .textContentType(passwordContentType)
                         .textFieldStyle(.roundedBorder)
                         .onSubmit(submit)
                 }

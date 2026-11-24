@@ -1,6 +1,7 @@
 name: CineBoard
 options:
   bundleIdPrefix: com.example
+  developmentLanguage: ru
   deploymentTarget:
     iOS: "17.0"
 configFiles:
@@ -9,6 +10,8 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "5.9"
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
 targets:
   CineBoard:
     type: application
@@ -35,6 +38,16 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.example.CineBoardTests
+  CineBoardUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [CineBoardUITests]
+    dependencies:
+      - target: CineBoard
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.CineBoardUITests
 schemes:
   CineBoard:
     build:
@@ -44,4 +57,4 @@ schemes:
       config: Debug
     test:
       config: Debug
-      targets: [CineBoardTests]
+      targets: [CineBoardTests, CineBoardUITests]

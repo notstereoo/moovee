@@ -4,8 +4,15 @@ import Foundation
 @MainActor @Observable
 final class CollectionsViewModel {
     enum Scope: String, CaseIterable, Identifiable {
-        case mine = "Мои", discover = "Открытия"
+        case mine, discover
         var id: String { rawValue }
+
+        var title: LocalizedStringResource {
+            switch self {
+            case .mine: "Мои"
+            case .discover: "Открытия"
+            }
+        }
     }
 
     var scope: Scope = .mine

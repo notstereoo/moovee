@@ -27,6 +27,7 @@ private struct ProfileContent: View {
     @State private var showEditProfile = false
     @State private var showFavoritesEditor = false
     @State private var confirmLogout = false
+    @ScaledMetric(relativeTo: .caption) private var posterWidth: CGFloat = 110
 
     private var user: UserAccount { model.user }
 
@@ -90,21 +91,30 @@ private struct ProfileContent: View {
             } else if model.isMe {
                 Text("Добавьте описание профиля через меню ⋯").foregroundStyle(.tertiary).font(.footnote)
             }
-            HStack(spacing: 16) {
-                stat(model.favorites.count, "любимых")
-                stat(model.collections.count, "подборок")
-                stat(model.reviews.count, "отзывов")
+            // На крупном шрифте счётчики встают в столбик, а не рвут слова.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 16) { stats }
+                VStack(spacing: 8) { stats }
             }
             .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func stat(_ value: Int, _ title: String) -> some View {
+    @ViewBuilder
+    private var stats: some View {
+        stat(model.favorites.count, "любимых")
+        stat(model.collections.count, "подборок")
+        stat(model.reviews.count, "отзывов")
+    }
+
+    private func stat(_ value: Int, _ title: LocalizedStringKey) -> some View {
         VStack(spacing: 0) {
             Text("\(value)").font(.headline)
             Text(title).font(.caption).foregroundStyle(.secondary)
         }
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
         .accessibilityElement(children: .combine)
     }
 
@@ -136,9 +146,9 @@ private struct ProfileContent: View {
                             NavigationLink(value: Movie(favorite: fav)) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     PosterImage(path: fav.posterPath, title: fav.title, size: .w342, ratio: 1.5)
-                                        .frame(width: 110)
-                                    Text(fav.title).font(.caption.weight(.medium)).lineLimit(2)
-                                        .frame(width: 110, alignment: .leading)
+                                        .frame(width: posterWidth)
+                                    Text(fav.title).font(.caption.weight(.medium)).lineLimit(3)
+                                        .frame(width: posterWidth, alignment: .leading)
                                 }
                             }
                             .buttonStyle(.plain)

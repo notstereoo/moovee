@@ -6,9 +6,9 @@ enum CollectionError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .notOwner: "Редактировать можно только свои подборки."
-        case .emptyTitle: "Введите название подборки."
-        case .saveFailed: "Не удалось сохранить изменения. Повторите попытку."
+        case .notOwner: String(localized: "Редактировать можно только свои подборки.")
+        case .emptyTitle: String(localized: "Введите название подборки.")
+        case .saveFailed: String(localized: "Не удалось сохранить изменения. Повторите попытку.")
         }
     }
 }

@@ -68,29 +68,35 @@ private struct MovieDetailContent: View {
             }
             .buttonStyle(.borderedProminent)
 
-            HStack(spacing: 10) {
-                Button {
-                    model.toggleFavorite()
-                } label: {
-                    Label(
-                        model.isFavorite ? "В любимых" : "В любимые",
-                        systemImage: model.isFavorite ? "heart.fill" : "heart"
-                    )
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .tint(model.isFavorite ? .pink : .accentColor)
-
-                Button {
-                    showReviewEditor = true
-                } label: {
-                    Label(model.myReview == nil ? "Оценить" : "Мой отзыв", systemImage: "star.bubble")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { secondaryButtons }
+                VStack(spacing: 10) { secondaryButtons }
             }
         }
         .controlSize(.large)
+    }
+
+    @ViewBuilder
+    private var secondaryButtons: some View {
+        Button {
+            model.toggleFavorite()
+        } label: {
+            Label(
+                model.isFavorite ? "В любимых" : "В любимые",
+                systemImage: model.isFavorite ? "heart.fill" : "heart"
+            )
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(model.isFavorite ? .pink : .accentColor)
+
+        Button {
+            showReviewEditor = true
+        } label: {
+            Label(model.myReview == nil ? "Оценить" : "Мой отзыв", systemImage: "star.bubble")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
     }
 
     @ViewBuilder
