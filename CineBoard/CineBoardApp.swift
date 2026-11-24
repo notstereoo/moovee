@@ -29,5 +29,13 @@ struct CineBoardApp: App {
     }
 }
 #Preview {
-    ContentView()
+    let container = try! ModelContainer(
+        for: UserAccount.self, MovieCollection.self, CollectionItem.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    DemoSeeder.seedIfNeeded(container.mainContext)
+    return RootView()
+        .environment(AppSession(context: container.mainContext))
+        .environment(\.catalog, TMDBClient())
+        .modelContainer(container)
 }
