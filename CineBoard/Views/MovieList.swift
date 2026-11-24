@@ -42,7 +42,8 @@ final class MovieListModel {
 
     func loadMoreIfNeeded(current movie: Movie) async {
         guard phase == .loaded, !isLoadingMore, page < totalPages,
-              movies.suffix(6).contains(where: { $0.id == movie.id }) else { return }
+            movies.suffix(6).contains(where: { $0.id == movie.id })
+        else { return }
         isLoadingMore = true
         loadMoreFailed = false
         defer { isLoadingMore = false }
@@ -115,7 +116,9 @@ struct MovieMasonry: View {
                 .buttonStyle(.plain)
 
                 if let onSave {
-                    Button { onSave(movie) } label: {
+                    Button {
+                        onSave(movie)
+                    } label: {
                         Image(systemName: "bookmark.fill")
                             .font(.subheadline)
                             .frame(width: 36, height: 36)
@@ -137,7 +140,9 @@ struct MovieMasonry: View {
         .onAppear { onAppearCard?(movie) }
         .contextMenu {
             ForEach(actions(movie)) { a in
-                Button(role: a.isDestructive ? .destructive : nil) { a.handler() } label: {
+                Button(role: a.isDestructive ? .destructive : nil) {
+                    a.handler()
+                } label: {
                     Label(a.title, systemImage: a.systemImage)
                 }
             }
@@ -168,11 +173,13 @@ struct MovieListContent: View {
             case .failed(let message):
                 ErrorStateView(message: message) { Task { await model.loadFirst() } }.padding(.top, 60)
             case .empty:
-                ContentUnavailableView(emptyTitle, systemImage: "film.stack", description: Text(emptyMessage)).padding(.top, 60)
+                ContentUnavailableView(emptyTitle, systemImage: "film.stack", description: Text(emptyMessage)).padding(
+                    .top, 60)
             case .loaded:
-                MovieMasonry(movies: model.movies,
-                             onSave: { movieToSave = $0 },
-                             onAppearCard: { m in Task { await model.loadMoreIfNeeded(current: m) } })
+                MovieMasonry(
+                    movies: model.movies,
+                    onSave: { movieToSave = $0 },
+                    onAppearCard: { m in Task { await model.loadMoreIfNeeded(current: m) } })
                 footer
             }
         }
@@ -204,8 +211,9 @@ struct FeedView: View {
         NavigationStack {
             Group {
                 if let model {
-                    MovieListContent(model: model, emptyTitle: "Лента пуста",
-                                     emptyMessage: "Каталог не вернул фильмов. Потяните вниз, чтобы обновить.")
+                    MovieListContent(
+                        model: model, emptyTitle: "Лента пуста",
+                        emptyMessage: "Каталог не вернул фильмов. Потяните вниз, чтобы обновить.")
                 } else {
                     Color.clear
                 }
@@ -234,11 +242,13 @@ struct SearchView: View {
         NavigationStack {
             Group {
                 if let model, !trimmed.isEmpty {
-                    MovieListContent(model: model, emptyTitle: "Ничего не найдено",
-                                     emptyMessage: "Попробуйте изменить запрос или проверить написание.")
+                    MovieListContent(
+                        model: model, emptyTitle: "Ничего не найдено",
+                        emptyMessage: "Попробуйте изменить запрос или проверить написание.")
                 } else {
-                    ContentUnavailableView("Поиск фильмов", systemImage: "magnifyingglass",
-                                           description: Text("Введите название фильма, чтобы найти его в каталоге TMDB."))
+                    ContentUnavailableView(
+                        "Поиск фильмов", systemImage: "magnifyingglass",
+                        description: Text("Введите название фильма, чтобы найти его в каталоге TMDB."))
                 }
             }
             .navigationTitle("Поиск")
@@ -247,7 +257,7 @@ struct SearchView: View {
             .task(id: trimmed) {
                 let q = trimmed
                 guard !q.isEmpty else { model = nil; return }
-                try? await Task.sleep(for: .milliseconds(400))   // debounce
+                try? await Task.sleep(for: .milliseconds(400))  // debounce
                 guard !Task.isCancelled else { return }
                 let m = MovieListModel { [catalog] page in try await catalog.search(query: q, page: page) }
                 model = m

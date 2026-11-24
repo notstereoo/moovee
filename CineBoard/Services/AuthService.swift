@@ -67,9 +67,10 @@ final class AppSession {
         guard try findUser(named: name) == nil else { throw AuthError.usernameTaken }
 
         let salt = PasswordHasher.randomSalt()
-        let user = UserAccount(username: name,
-                               passwordHash: PasswordHasher.hash(password, salt: salt),
-                               salt: salt)
+        let user = UserAccount(
+            username: name,
+            passwordHash: PasswordHasher.hash(password, salt: salt),
+            salt: salt)
         context.insert(user)
         do { try context.save() } catch { context.rollback(); throw AuthError.storage }
         start(user)
@@ -78,8 +79,8 @@ final class AppSession {
     func login(username raw: String, password: String) throws {
         let name = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard let user = try findUser(named: name), !user.isDemo,
-              let hash = user.passwordHash, let salt = user.salt,
-              PasswordHasher.constantTimeEqual(hash, PasswordHasher.hash(password, salt: salt))
+            let hash = user.passwordHash, let salt = user.salt,
+            PasswordHasher.constantTimeEqual(hash, PasswordHasher.hash(password, salt: salt))
         else { throw AuthError.invalidCredentials }
         start(user)
     }

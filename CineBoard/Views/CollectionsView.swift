@@ -33,8 +33,10 @@ struct CollectionsView: View {
                     } else {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
                             ForEach(list) { c in
-                                NavigationLink(value: c) { CollectionCard(collection: c, showOwner: scope == .discover) }
-                                    .buttonStyle(.plain)
+                                NavigationLink(value: c) {
+                                    CollectionCard(collection: c, showOwner: scope == .discover)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 12)
@@ -63,8 +65,9 @@ struct CollectionsView: View {
                 Button("Создать подборку") { showEditor = true }.buttonStyle(.borderedProminent)
             }
         } else {
-            ContentUnavailableView("Пока нечего показать", systemImage: "globe",
-                                   description: Text("Публичные подборки других пользователей появятся здесь."))
+            ContentUnavailableView(
+                "Пока нечего показать", systemImage: "globe",
+                description: Text("Публичные подборки других пользователей появятся здесь."))
         }
     }
 }

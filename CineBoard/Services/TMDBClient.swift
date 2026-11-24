@@ -34,8 +34,10 @@ struct TMDBClient: MovieCatalog {
     let apiKey: String
     var session: URLSession = .shared
 
-    init(apiKey: String = (Bundle.main.object(forInfoDictionaryKey: "TMDBAPIKey") as? String) ?? "",
-         session: URLSession = .shared) {
+    init(
+        apiKey: String = (Bundle.main.object(forInfoDictionaryKey: "TMDBAPIKey") as? String) ?? "",
+        session: URLSession = .shared
+    ) {
         self.apiKey = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         self.session = session
     }
@@ -53,20 +55,24 @@ struct TMDBClient: MovieCatalog {
     }
 
     func search(query: String, page: Int) async throws -> MoviePage {
-        try await get("/search/movie", [
-            URLQueryItem(name: "query", value: query),
-            URLQueryItem(name: "page", value: String(page)),
-            URLQueryItem(name: "include_adult", value: "false"),
-        ])
+        try await get(
+            "/search/movie",
+            [
+                URLQueryItem(name: "query", value: query),
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "include_adult", value: "false"),
+            ])
     }
 
     func details(id: Int) async throws -> Movie { try await get("/movie/\(id)") }
 
     private func get<T: Decodable>(_ path: String, _ items: [URLQueryItem] = []) async throws -> T {
         guard isConfigured else { throw TMDBError.missingKey }
-        guard var comps = URLComponents(string: "https://api.themoviedb.org/3\(path)") else { throw TMDBError.badResponse }
+        guard var comps = URLComponents(string: "https://api.themoviedb.org/3\(path)") else {
+            throw TMDBError.badResponse
+        }
         var query = items + [URLQueryItem(name: "language", value: "ru-RU")]
-        let useBearer = apiKey.hasPrefix("eyJ")   // v4 Read Access Token — JWT
+        let useBearer = apiKey.hasPrefix("eyJ")  // v4 Read Access Token — JWT
         if !useBearer { query.append(URLQueryItem(name: "api_key", value: apiKey)) }
         comps.queryItems = query
         guard let url = comps.url else { throw TMDBError.badResponse }

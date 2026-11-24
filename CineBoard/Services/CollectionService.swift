@@ -22,7 +22,8 @@ struct CollectionService {
     func create(title: String, details: String, isPublic: Bool) throws -> MovieCollection {
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { throw CollectionError.emptyTitle }
-        let c = MovieCollection(title: t, details: details.trimmingCharacters(in: .whitespacesAndNewlines), isPublic: isPublic)
+        let c = MovieCollection(
+            title: t, details: details.trimmingCharacters(in: .whitespacesAndNewlines), isPublic: isPublic)
         context.insert(c)
         c.owner = user
         try commit()

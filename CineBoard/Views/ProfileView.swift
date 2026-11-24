@@ -59,8 +59,10 @@ struct ProfileView: View {
                     ContentUnavailableView(
                         isMe ? "Пока нет подборок" : "Нет публичных подборок",
                         systemImage: "rectangle.stack",
-                        description: Text(isMe ? "Создайте первую подборку на вкладке «Подборки»."
-                                               : "Этот пользователь пока ничем не поделился."))
+                        description: Text(
+                            isMe
+                                ? "Создайте первую подборку на вкладке «Подборки»."
+                                : "Этот пользователь пока ничем не поделился."))
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
                         ForEach(list) { c in
@@ -78,8 +80,12 @@ struct ProfileView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Редактировать профиль", systemImage: "pencil") { showEditProfile = true }
-                        Button("Выйти", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) { confirmLogout = true }
-                    } label: { Image(systemName: "ellipsis.circle") }
+                        Button("Выйти", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                            confirmLogout = true
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
                     .accessibilityLabel("Меню профиля")
                 }
             }
@@ -101,7 +107,9 @@ struct EditProfileView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("О себе") { TextField("Пара слов о ваших вкусах", text: $bio, axis: .vertical).lineLimit(3...6) }
+                Section("О себе") {
+                    TextField("Пара слов о ваших вкусах", text: $bio, axis: .vertical).lineLimit(3...6)
+                }
                 Section { Text("\(bio.count)/160").foregroundStyle(.secondary).font(.footnote) }
             }
             .navigationTitle("Профиль")
@@ -110,8 +118,7 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Сохранить") {
-                        do { try session.updateBio(bio); dismiss() }
-                        catch { errorMessage = userMessage(for: error) }
+                        do { try session.updateBio(bio); dismiss() } catch { errorMessage = userMessage(for: error) }
                     }
                     .disabled(bio.count > 160)
                 }

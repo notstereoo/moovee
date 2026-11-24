@@ -8,10 +8,15 @@ func userMessage(for error: Error) -> String {
 func filmsText(_ n: Int) -> String {
     let m10 = n % 10, m100 = n % 100
     let word: String
-    if (11...14).contains(m100) { word = "фильмов" }
-    else if m10 == 1 { word = "фильм" }
-    else if (2...4).contains(m10) { word = "фильма" }
-    else { word = "фильмов" }
+    if (11...14).contains(m100) {
+        word = "фильмов"
+    } else if m10 == 1 {
+        word = "фильм"
+    } else if (2...4).contains(m10) {
+        word = "фильма"
+    } else {
+        word = "фильмов"
+    }
     return "\(n) \(word)"
 }
 
@@ -29,11 +34,16 @@ extension EnvironmentValues {
 
 extension View {
     func errorAlert(_ message: Binding<String?>) -> some View {
-        alert("Ошибка",
-              isPresented: Binding(get: { message.wrappedValue != nil },
-                                   set: { if !$0 { message.wrappedValue = nil } })) {
+        alert(
+            "Ошибка",
+            isPresented: Binding(
+                get: { message.wrappedValue != nil },
+                set: { if !$0 { message.wrappedValue = nil } })
+        ) {
             Button("OK", role: .cancel) {}
-        } message: { Text(message.wrappedValue ?? "") }
+        } message: {
+            Text(message.wrappedValue ?? "")
+        }
     }
 
     /// Навигация к фильму, подборке и профилю — подключается один раз на NavigationStack.
@@ -50,7 +60,7 @@ struct PosterImage: View {
     let path: String?
     let title: String
     var size: TMDBImage.Size = .w342
-    var ratio: CGFloat = 1.5   // высота / ширина
+    var ratio: CGFloat = 1.5  // высота / ширина
 
     var body: some View {
         Color(.secondarySystemBackground)
@@ -94,9 +104,11 @@ struct AvatarView: View {
         Circle()
             .fill(Color(hue: hue, saturation: 0.45, brightness: 0.75))
             .frame(width: size, height: size)
-            .overlay(Text(String(name.prefix(1)).uppercased())
-                .font(.system(size: size * 0.45, weight: .semibold))
-                .foregroundStyle(.white))
+            .overlay(
+                Text(String(name.prefix(1)).uppercased())
+                    .font(.system(size: size * 0.45, weight: .semibold))
+                    .foregroundStyle(.white)
+            )
             .accessibilityHidden(true)
     }
 }
@@ -147,10 +159,12 @@ struct ErrorStateView: View {
 struct TMDBAttribution: View {
     var body: some View {
         VStack(spacing: 4) {
-            Text("Данные о фильмах предоставлены TMDB. Приложение использует API TMDB, но не одобрено и не сертифицировано TMDB.")
-                .font(.caption2)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+            Text(
+                "Данные о фильмах предоставлены TMDB. Приложение использует API TMDB, но не одобрено и не сертифицировано TMDB."
+            )
+            .font(.caption2)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(.secondary)
             Link("themoviedb.org", destination: URL(string: "https://www.themoviedb.org")!)
                 .font(.caption2)
         }

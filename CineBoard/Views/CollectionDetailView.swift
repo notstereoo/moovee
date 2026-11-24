@@ -16,8 +16,9 @@ struct CollectionDetailView: View {
         if collection.modelContext == nil || collection.isDeleted {
             ContentUnavailableView("Подборка недоступна", systemImage: "eye.slash")
         } else if !collection.isVisible(to: session.currentUser) {
-            ContentUnavailableView("Подборка недоступна", systemImage: "lock.fill",
-                                   description: Text("Автор сделал эту подборку приватной."))
+            ContentUnavailableView(
+                "Подборка недоступна", systemImage: "lock.fill",
+                description: Text("Автор сделал эту подборку приватной."))
         } else {
             content
         }
@@ -33,13 +34,17 @@ struct CollectionDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 if collection.items.isEmpty {
-                    ContentUnavailableView("Здесь пока пусто", systemImage: "film.stack",
-                        description: Text(isOwner ? "Добавляйте фильмы из ленты и поиска кнопкой с закладкой."
-                                                  : "В этой подборке пока нет фильмов."))
+                    ContentUnavailableView(
+                        "Здесь пока пусто", systemImage: "film.stack",
+                        description: Text(
+                            isOwner
+                                ? "Добавляйте фильмы из ленты и поиска кнопкой с закладкой."
+                                : "В этой подборке пока нет фильмов."))
                 } else {
-                    MovieMasonry(movies: collection.sortedItems.map(Movie.init(item:)),
-                                 onSave: { movieToSave = $0 },
-                                 actions: ownerActions)
+                    MovieMasonry(
+                        movies: collection.sortedItems.map(Movie.init(item:)),
+                        onSave: { movieToSave = $0 },
+                        actions: ownerActions)
                 }
                 TMDBAttribution()
             }
@@ -52,24 +57,32 @@ struct CollectionDetailView: View {
                     Menu {
                         Button("Редактировать", systemImage: "pencil") { showEdit = true }
                         Button("Удалить подборку", systemImage: "trash", role: .destructive) { confirmDelete = true }
-                    } label: { Image(systemName: "ellipsis.circle") }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
                     .accessibilityLabel("Действия с подборкой")
                 }
             }
         }
         .sheet(isPresented: $showEdit) { CollectionEditorView(collection: collection) }
         .sheet(item: $movieToSave) { SaveToCollectionSheet(movie: $0) }
-        .confirmationDialog("Удалить подборку «\(collection.title)»?", isPresented: $confirmDelete, titleVisibility: .visible) {
+        .confirmationDialog(
+            "Удалить подборку «\(collection.title)»?", isPresented: $confirmDelete, titleVisibility: .visible
+        ) {
             Button("Удалить", role: .destructive, action: deleteCollection)
             Button("Отмена", role: .cancel) {}
-        } message: { Text("Фильмы из каталога не пострадают, но подборка пропадёт безвозвратно.") }
+        } message: {
+            Text("Фильмы из каталога не пострадают, но подборка пропадёт безвозвратно.")
+        }
         .errorAlert($errorMessage)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Label(collection.isPublic ? "Публичная" : "Приватная", systemImage: collection.isPublic ? "globe" : "lock.fill")
+                Label(
+                    collection.isPublic ? "Публичная" : "Приватная",
+                    systemImage: collection.isPublic ? "globe" : "lock.fill")
                 Text("·")
                 Text(filmsText(collection.items.count))
             }
@@ -95,15 +108,18 @@ struct CollectionDetailView: View {
     private func ownerActions(for movie: Movie) -> [CardAction] {
         guard isOwner else { return [] }
         return [
-            CardAction(title: "Сделать обложкой", systemImage: "photo") { run { try $0.setCover(of: collection, movieID: movie.id) } },
-            CardAction(title: "Убрать из подборки", systemImage: "trash", isDestructive: true) { run { try $0.remove(movieID: movie.id, from: collection) } },
+            CardAction(title: "Сделать обложкой", systemImage: "photo") {
+                run { try $0.setCover(of: collection, movieID: movie.id) }
+            },
+            CardAction(title: "Убрать из подборки", systemImage: "trash", isDestructive: true) {
+                run { try $0.remove(movieID: movie.id, from: collection) }
+            },
         ]
     }
 
     private func run(_ op: (CollectionService) throws -> Void) {
         guard let user = session.currentUser else { return }
-        do { try op(CollectionService(context: context, user: user)) }
-        catch { errorMessage = userMessage(for: error) }
+        do { try op(CollectionService(context: context, user: user)) } catch { errorMessage = userMessage(for: error) }
     }
 
     private func deleteCollection() {

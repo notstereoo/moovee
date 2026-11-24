@@ -18,8 +18,9 @@ final class CineBoardTests: XCTestCase {
     }
 
     private func movie(_ id: Int = 1) -> Movie {
-        Movie(id: id, title: "Фильм \(id)", overview: nil, posterPath: "/p\(id).jpg", backdropPath: nil,
-              releaseDate: "2020-05-01", voteAverage: 7.5, runtime: nil, genres: nil)
+        Movie(
+            id: id, title: "Фильм \(id)", overview: nil, posterPath: "/p\(id).jpg", backdropPath: nil,
+            releaseDate: "2020-05-01", voteAverage: 7.5, runtime: nil, genres: nil)
     }
 
     // MARK: Аккаунт
@@ -39,10 +40,16 @@ final class CineBoardTests: XCTestCase {
 
     func testRegistrationValidationAndDuplicates() throws {
         let s = makeSession()
-        XCTAssertThrowsError(try s.register(username: "a", password: "password1")) { XCTAssertEqual($0 as? AuthError, .invalidUsername) }
-        XCTAssertThrowsError(try s.register(username: "bob", password: "short")) { XCTAssertEqual($0 as? AuthError, .weakPassword) }
+        XCTAssertThrowsError(try s.register(username: "a", password: "password1")) {
+            XCTAssertEqual($0 as? AuthError, .invalidUsername)
+        }
+        XCTAssertThrowsError(try s.register(username: "bob", password: "short")) {
+            XCTAssertEqual($0 as? AuthError, .weakPassword)
+        }
         try s.register(username: "bob", password: "password1")
-        XCTAssertThrowsError(try s.register(username: "BOB", password: "password2")) { XCTAssertEqual($0 as? AuthError, .usernameTaken) }
+        XCTAssertThrowsError(try s.register(username: "BOB", password: "password2")) {
+            XCTAssertEqual($0 as? AuthError, .usernameTaken)
+        }
     }
 
     func testDemoUsersCannotLogIn() throws {
@@ -99,7 +106,9 @@ final class CineBoardTests: XCTestCase {
 
         try s.register(username: "intruder", password: "password1")
         let other = CollectionService(context: context, user: s.currentUser!)
-        XCTAssertThrowsError(try other.update(c, title: "Взлом", details: "", isPublic: false)) { XCTAssertEqual($0 as? CollectionError, .notOwner) }
+        XCTAssertThrowsError(try other.update(c, title: "Взлом", details: "", isPublic: false)) {
+            XCTAssertEqual($0 as? CollectionError, .notOwner)
+        }
         XCTAssertThrowsError(try other.delete(c)) { XCTAssertEqual($0 as? CollectionError, .notOwner) }
         XCTAssertThrowsError(try other.add(movie(), to: c)) { XCTAssertEqual($0 as? CollectionError, .notOwner) }
         XCTAssertEqual(c.title, "Моя")
@@ -132,8 +141,8 @@ final class CineBoardTests: XCTestCase {
 
     func testMovieDecoding() throws {
         let json = #"""
-        {"page":1,"total_pages":3,"results":[{"id":603,"title":"Матрица","poster_path":"/m.jpg","release_date":"1999-03-30","vote_average":8.2,"overview":"…"}]}
-        """#
+            {"page":1,"total_pages":3,"results":[{"id":603,"title":"Матрица","poster_path":"/m.jpg","release_date":"1999-03-30","vote_average":8.2,"overview":"…"}]}
+            """#
         let page = try TMDBClient.decoder.decode(MoviePage.self, from: Data(json.utf8))
         XCTAssertEqual(page.totalPages, 3)
         XCTAssertEqual(page.results.first?.year, "1999")
@@ -143,7 +152,8 @@ final class CineBoardTests: XCTestCase {
     func testClientWithoutKeyReportsMissingKey() async {
         let client = TMDBClient(apiKey: "")
         XCTAssertFalse(client.isConfigured)
-        do { _ = try await client.trending(page: 1); XCTFail("expected error") }
-        catch { XCTAssertEqual(error as? TMDBError, .missingKey) }
+        do { _ = try await client.trending(page: 1); XCTFail("expected error") } catch {
+            XCTAssertEqual(error as? TMDBError, .missingKey)
+        }
     }
 }

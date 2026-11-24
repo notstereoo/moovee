@@ -29,7 +29,9 @@ struct MovieDetailView: View {
                     }
                 }
 
-                Button { showSave = true } label: {
+                Button {
+                    showSave = true
+                } label: {
                     Label("Сохранить в подборку", systemImage: "bookmark").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -68,8 +70,8 @@ struct MovieDetailView: View {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
-        do { detail = try await catalog.details(id: movie.id) }
-        catch is CancellationError {}
-        catch { errorMessage = userMessage(for: error) }
+        do { detail = try await catalog.details(id: movie.id) } catch is CancellationError {} catch {
+            errorMessage = userMessage(for: error)
+        }
     }
 }

@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Lint
+        run: xcrun swift-format lint --recursive --configuration .swift-format CineBoard CineBoardTests
+      - name: Build and test
+        run: |
+          DEST=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
+          xcodebuild test -project CineBoard.xcodeproj -scheme CineBoard \
+            -destination "platform=iOS Simulator,name=$DEST" CODE_SIGNING_ALLOWED=NO

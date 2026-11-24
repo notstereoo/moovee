@@ -25,7 +25,9 @@ struct CollectionEditorView: View {
         NavigationStack {
             Form {
                 Section("Название") { TextField("Например, «Фильмы на дождливый вечер»", text: $title) }
-                Section("Описание") { TextField("О чём эта подборка", text: $details, axis: .vertical).lineLimit(3...6) }
+                Section("Описание") {
+                    TextField("О чём эта подборка", text: $details, axis: .vertical).lineLimit(3...6)
+                }
                 Section {
                     Toggle("Публичная подборка", isOn: $isPublic)
                 } footer: {

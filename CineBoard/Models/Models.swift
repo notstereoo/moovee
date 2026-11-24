@@ -34,9 +34,10 @@ struct MoviePage: Decodable, Sendable {
 
 extension Movie {
     init(item: CollectionItem) {
-        self.init(id: item.movieID, title: item.title, overview: nil, posterPath: item.posterPath,
-                  backdropPath: nil, releaseDate: item.year, voteAverage: item.rating,
-                  runtime: nil, genres: nil)
+        self.init(
+            id: item.movieID, title: item.title, overview: nil, posterPath: item.posterPath,
+            backdropPath: nil, releaseDate: item.year, voteAverage: item.rating,
+            runtime: nil, genres: nil)
     }
 }
 

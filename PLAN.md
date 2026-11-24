@@ -67,7 +67,7 @@ Views (SwiftUI)  →  ViewModels (@Observable, @MainActor)  →  Services/Reposi
 ### Этап 0 — Фундамент (≈ 1–2 дня)
 - [ ] Зафиксировать цели продукта и ответы на вопросы §3
 - [x] Закоммитить текущие правки `CineBoardApp.swift`, проверить сборку и тесты (сборка ок, 11 тестов зелёные)
-- [ ] Настроить CI (сборка + тесты) и SwiftLint/swift-format
+- [x] Настроить CI (сборка + тесты) и swift-format (`.swift-format`, `.github/workflows/ci.yml`)
 - [ ] Отдельная схема Debug/Release, секреты только через `Secrets.xcconfig`
 
 ### Этап 1 — Рефакторинг слоёв (≈ 3–4 дня)

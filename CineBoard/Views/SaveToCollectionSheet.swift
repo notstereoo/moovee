@@ -26,7 +26,9 @@ struct SaveToCollectionSheet: View {
                     }
                 } else {
                     List(mine) { c in
-                        Button { toggle(c) } label: {
+                        Button {
+                            toggle(c)
+                        } label: {
                             HStack(spacing: 12) {
                                 PosterImage(path: c.coverPath, title: c.title, size: .w185, ratio: 1.0).frame(width: 48)
                                 VStack(alignment: .leading) {
@@ -47,13 +49,16 @@ struct SaveToCollectionSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } }
-                ToolbarItem(placement: .secondaryAction) { Button("Новая подборка", systemImage: "plus") { showNew = true } }
+                ToolbarItem(placement: .secondaryAction) {
+                    Button("Новая подборка", systemImage: "plus") { showNew = true }
+                }
             }
             .sheet(isPresented: $showNew) {
                 CollectionEditorView(onSaved: { created in
                     guard let user = session.currentUser else { return }
-                    do { try CollectionService(context: context, user: user).add(movie, to: created) }
-                    catch { errorMessage = userMessage(for: error) }
+                    do { try CollectionService(context: context, user: user).add(movie, to: created) } catch {
+                        errorMessage = userMessage(for: error)
+                    }
                 })
             }
             .errorAlert($errorMessage)
@@ -67,8 +72,7 @@ struct SaveToCollectionSheet: View {
         guard let user = session.currentUser else { return }
         let service = CollectionService(context: context, user: user)
         do {
-            if contains(c) { try service.remove(movieID: movie.id, from: c) }
-            else { try service.add(movie, to: c) }
+            if contains(c) { try service.remove(movieID: movie.id, from: c) } else { try service.add(movie, to: c) }
         } catch { errorMessage = userMessage(for: error) }
     }
 }
