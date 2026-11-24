@@ -120,6 +120,13 @@ final class UserAccount {
     }
 }
 
+/// Явная идентичность по стабильному уникальному `id`: `navigationDestination(for:)` требует `Hashable`,
+/// а на сборке под устройство компилятор не всегда видит соответствие, которое даёт `@Model`.
+extension UserAccount: Hashable {
+    static func == (lhs: UserAccount, rhs: UserAccount) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+}
+
 @Model
 final class MovieCollection {
     @Attribute(.unique) var id: UUID
