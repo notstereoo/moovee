@@ -43,11 +43,7 @@ final class LocalFavoritesRepository: FavoritesRepository {
     }
 
     func move(from source: IndexSet, to destination: Int, as user: UserAccount) throws {
-        var list = favorites(of: user)
-        let moving = source.sorted().map { list[$0] }
-        let insertAt = destination - source.filter { $0 < destination }.count
-        for index in source.sorted(by: >) { list.remove(at: index) }
-        list.insert(contentsOf: moving, at: min(max(insertAt, 0), list.count))
+        let list = reordered(favorites(of: user), from: source, to: destination)
         for (index, item) in list.enumerated() { item.position = index }
         try commit()
     }

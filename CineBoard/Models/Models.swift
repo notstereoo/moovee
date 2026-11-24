@@ -26,10 +26,14 @@ struct Movie: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
-struct MoviePage: Decodable, Sendable {
+struct MoviePage: Codable, Sendable {
     let page: Int
     let results: [Movie]
     let totalPages: Int
+    /// Страница взята из локального кэша (нет сети), а не из свежего ответа каталога.
+    var isFromCache = false
+
+    private enum CodingKeys: String, CodingKey { case page, results, totalPages }
 }
 
 extension Movie {
@@ -152,6 +156,10 @@ final class CollectionItem {
     var posterPath: String?
     var rating: Double?
     var addedAt: Date
+    /// Позиция при ручной сортировке подборки.
+    var position: Int = 0
+    /// Когда снимок последний раз сверялся с каталогом.
+    var refreshedAt: Date?
     var collection: MovieCollection?
 
     init(movie: Movie) {
@@ -177,6 +185,7 @@ final class Review {
     var text: String
     var createdAt: Date
     var updatedAt: Date
+    var refreshedAt: Date?
     var author: UserAccount?
 
     init(movie: Movie, rating: Int, text: String) {
@@ -202,6 +211,7 @@ final class FavoriteMovie {
     var posterPath: String?
     var position: Int
     var addedAt: Date
+    var refreshedAt: Date?
     var user: UserAccount?
 
     init(movie: Movie, position: Int) {

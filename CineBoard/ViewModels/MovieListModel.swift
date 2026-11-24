@@ -10,6 +10,8 @@ final class MovieListModel {
     private(set) var phase: Phase = .loading
     private(set) var isLoadingMore = false
     private(set) var loadMoreFailed = false
+    /// Показаны сохранённые данные (нет связи с каталогом).
+    private(set) var isShowingCached = false
     private var page = 0
     private var totalPages = 1
     private let fetch: @Sendable (Int) async throws -> MoviePage
@@ -23,6 +25,7 @@ final class MovieListModel {
             page = 1
             totalPages = result.totalPages
             movies = unique(result.results)
+            isShowingCached = result.isFromCache
             phase = movies.isEmpty ? .empty : .loaded
         } catch is CancellationError {
             return
@@ -37,6 +40,7 @@ final class MovieListModel {
         page = 1
         totalPages = result.totalPages
         movies = unique(result.results)
+        isShowingCached = result.isFromCache
         phase = movies.isEmpty ? .empty : .loaded
     }
 
@@ -52,6 +56,7 @@ final class MovieListModel {
             page += 1
             totalPages = result.totalPages
             movies += unique(result.results, existing: movies)
+            if result.isFromCache { isShowingCached = true }
         } catch is CancellationError {
         } catch {
             loadMoreFailed = true

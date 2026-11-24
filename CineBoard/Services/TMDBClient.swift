@@ -22,6 +22,16 @@ enum TMDBError: LocalizedError, Equatable {
     }
 }
 
+extension TMDBError {
+    /// Временные сбои, при которых можно показать сохранённые данные.
+    var allowsCachedFallback: Bool {
+        switch self {
+        case .offline, .rateLimited, .server: true
+        case .missingKey, .invalidKey, .badResponse, .decoding: false
+        }
+    }
+}
+
 enum TMDBImage {
     enum Size: String { case w185, w342, w500, w780 }
     static func url(_ path: String?, _ size: Size) -> URL? {

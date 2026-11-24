@@ -12,6 +12,7 @@ private struct CollectionDetailContent: View {
     @Bindable var model: CollectionDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showEdit = false
+    @State private var showReorder = false
     @State private var confirmDelete = false
     @State private var movieToSave: Movie?
 
@@ -41,6 +42,8 @@ private struct CollectionDetailContent: View {
                             model.isOwner
                                 ? "Добавляйте фильмы из ленты и поиска кнопкой с закладкой."
                                 : "В этой подборке пока нет фильмов."))
+                } else if model.movies.isEmpty {
+                    ContentUnavailableView.search(text: model.query)
                 } else {
                     MovieMasonry(
                         movies: model.movies,
@@ -52,11 +55,30 @@ private struct CollectionDetailContent: View {
         }
         .navigationTitle(collection.title)
         .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $model.query, prompt: "Поиск в подборке")
         .toolbar {
+            if !collection.items.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Picker("Сортировка", selection: $model.sort) {
+                            ForEach(CollectionSort.allCases) { Label($0.title, systemImage: $0.systemImage).tag($0) }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down.circle")
+                    }
+                    .accessibilityLabel("Сортировка")
+                    .accessibilityValue(model.sort.title)
+                }
+            }
             if model.isOwner {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Редактировать", systemImage: "pencil") { showEdit = true }
+                        if collection.items.count > 1 {
+                            Button("Изменить порядок", systemImage: "arrow.up.and.down.text.horizontal") {
+                                showReorder = true
+                            }
+                        }
                         Button("Удалить подборку", systemImage: "trash", role: .destructive) { confirmDelete = true }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -65,6 +87,7 @@ private struct CollectionDetailContent: View {
                 }
             }
         }
+        .sheet(isPresented: $showReorder) { ReorderItemsView(model: model) }
         .sheet(isPresented: $showEdit) { CollectionEditorView(collection: collection) }
         .sheet(item: $movieToSave) { SaveToCollectionSheet(movie: $0) }
         .confirmationDialog(
@@ -114,5 +137,31 @@ private struct CollectionDetailContent: View {
                 model.remove(movieID: movie.id)
             },
         ]
+    }
+}
+
+private struct ReorderItemsView: View {
+    let model: CollectionDetailViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(model.manualOrder) { item in
+                    HStack(spacing: 12) {
+                        PosterImage(path: item.posterPath, title: item.title, size: .w185, ratio: 1.0).frame(width: 44)
+                        VStack(alignment: .leading) {
+                            Text(item.title)
+                            if let y = item.year { Text(y).font(.caption).foregroundStyle(.secondary) }
+                        }
+                    }
+                }
+                .onMove { model.moveItems(from: $0, to: $1) }
+            }
+            .environment(\.editMode, .constant(.active))
+            .navigationTitle("Порядок фильмов")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } } }
+        }
     }
 }

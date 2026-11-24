@@ -6,6 +6,8 @@ final class CollectionDetailViewModel {
 
     let collection: MovieCollection
     var errorMessage: String?
+    var query = ""
+    var sort: CollectionSort = .added
     private let repository: any CollectionRepository
     private let session: AppSession
 
@@ -27,7 +29,23 @@ final class CollectionDetailViewModel {
         return collection.owner?.id == me.id
     }
 
-    var movies: [Movie] { collection.sortedItems.map(Movie.init(item:)) }
+    /// Фильмы с учётом поиска и выбранной сортировки.
+    var movies: [Movie] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return collection.items(sortedBy: sort)
+            .filter { q.isEmpty || $0.title.localizedCaseInsensitiveContains(q) }
+            .map(Movie.init(item:))
+    }
+
+    var isSearching: Bool { !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    /// Фильмы в порядке автора — для экрана перестановки.
+    var manualOrder: [CollectionItem] { collection.items(sortedBy: .manual) }
+
+    func moveItems(from source: IndexSet, to destination: Int) {
+        perform { try repository.moveItems(in: collection, from: source, to: destination, as: $0) }
+        sort = .manual
+    }
 
     func setCover(movieID: Int) {
         perform { try repository.setCover(of: collection, movieID: movieID, as: $0) }

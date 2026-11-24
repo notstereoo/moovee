@@ -24,7 +24,7 @@ final class AppDependencies {
 
     /// Локальная конфигурация поверх SwiftData.
     static func local(
-        context: ModelContext, catalog: any MovieCatalog = TMDBClient(), defaults: UserDefaults = .standard
+        context: ModelContext, catalog: any MovieCatalog = CachingCatalog.standard(), defaults: UserDefaults = .standard
     ) -> AppDependencies {
         AppDependencies(
             session: AppSession(context: context, defaults: defaults),

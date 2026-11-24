@@ -25,6 +25,8 @@ protocol CollectionRepository: AnyObject {
     func add(_ movie: Movie, to c: MovieCollection, as user: UserAccount) throws
     func remove(movieID: Int, from c: MovieCollection, as user: UserAccount) throws
     func setCover(of c: MovieCollection, movieID: Int, as user: UserAccount) throws
+    /// Меняет порядок автора («Порядок автора» в подборке).
+    func moveItems(in c: MovieCollection, from source: IndexSet, to destination: Int, as user: UserAccount) throws
 }
 
 struct CommunityRating: Equatable {

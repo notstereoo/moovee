@@ -142,33 +142,4 @@ enum DemoSeeder {
         }
         try? context.save()
     }
-
-    /// Подтягивает постеры демо-фильмов из каталога (если ключ задан).
-    static func hydratePosters(context: ModelContext, catalog: any MovieCatalog) async {
-        guard catalog.isConfigured else { return }
-        let items =
-            ((try? context.fetch(FetchDescriptor<CollectionItem>(predicate: #Predicate { $0.posterPath == nil }))) ?? [])
-            .filter { $0.collection?.owner?.isDemo == true }
-        let reviews =
-            ((try? context.fetch(FetchDescriptor<Review>(predicate: #Predicate { $0.posterPath == nil }))) ?? [])
-            .filter { $0.author?.isDemo == true }
-        let favorites =
-            ((try? context.fetch(FetchDescriptor<FavoriteMovie>(predicate: #Predicate { $0.posterPath == nil }))) ?? [])
-            .filter { $0.user?.isDemo == true }
-        guard !(items.isEmpty && reviews.isEmpty && favorites.isEmpty) else { return }
-
-        var cache: [Int: Movie] = [:]
-        func lookup(_ id: Int) async -> Movie? {
-            if cache[id] == nil { cache[id] = try? await catalog.details(id: id) }
-            return cache[id]
-        }
-        for item in items {
-            guard let m = await lookup(item.movieID) else { continue }
-            item.posterPath = m.posterPath
-            if let r = m.voteAverage, r > 0 { item.rating = r }
-        }
-        for review in reviews { review.posterPath = await lookup(review.movieID)?.posterPath }
-        for fav in favorites { fav.posterPath = await lookup(fav.movieID)?.posterPath }
-        try? context.save()
-    }
 }

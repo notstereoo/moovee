@@ -69,6 +69,7 @@ final class LocalCollectionRepository: CollectionRepository {
         try authorize(c, user)
         guard !c.items.contains(where: { $0.movieID == movie.id }) else { return }
         let item = CollectionItem(movie: movie)
+        item.position = (c.items.map(\.position).max() ?? -1) + 1
         context.insert(item)
         item.collection = c
         try commit()
@@ -87,6 +88,13 @@ final class LocalCollectionRepository: CollectionRepository {
         try authorize(c, user)
         guard let path = c.items.first(where: { $0.movieID == movieID })?.posterPath else { return }
         c.coverPosterPath = path
+        try commit()
+    }
+
+    func moveItems(in c: MovieCollection, from source: IndexSet, to destination: Int, as user: UserAccount) throws {
+        try authorize(c, user)
+        let list = reordered(c.items(sortedBy: .manual), from: source, to: destination)
+        for (index, item) in list.enumerated() { item.position = index }
         try commit()
     }
 

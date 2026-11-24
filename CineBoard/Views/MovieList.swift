@@ -93,6 +93,19 @@ struct MovieMasonry: View {
     }
 }
 
+struct OfflineBanner: View {
+    var body: some View {
+        Label("Нет связи с каталогом. Показаны сохранённые данные.", systemImage: "icloud.slash")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10)
+            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
+    }
+}
+
 // MARK: - Контент списка со всеми состояниями
 
 struct MovieListContent: View {
@@ -112,6 +125,7 @@ struct MovieListContent: View {
                 ContentUnavailableView(emptyTitle, systemImage: "film.stack", description: Text(emptyMessage)).padding(
                     .top, 60)
             case .loaded:
+                if model.isShowingCached { OfflineBanner() }
                 MovieMasonry(
                     movies: model.movies,
                     onSave: { movieToSave = $0 },

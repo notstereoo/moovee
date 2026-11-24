@@ -7,6 +7,8 @@ struct CineBoardApp: App {
     @State private var dependencies: AppDependencies
 
     init() {
+        // Постеры кэшируются на диске: ленты и профили открываются без повторной загрузки.
+        URLCache.shared = URLCache(memoryCapacity: 64 << 20, diskCapacity: 300 << 20)
         do {
             let container = try AppSchema.makeContainer()
             DemoSeeder.seedIfNeeded(container.mainContext)
@@ -23,7 +25,7 @@ struct CineBoardApp: App {
                 .environment(dependencies)
                 .environment(dependencies.session)
                 .environment(\.catalog, dependencies.catalog)
-                .task { await DemoSeeder.hydratePosters(context: container.mainContext, catalog: dependencies.catalog) }
+                .task { await SnapshotRefresher.refreshStale(context: container.mainContext, catalog: dependencies.catalog) }
         }
         .modelContainer(container)
     }
