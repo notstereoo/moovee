@@ -15,14 +15,23 @@ struct ProfileTab: View {
 
 struct ProfileView: View {
     let user: UserAccount
-    @Environment(AppSession.self) private var session
-    @State private var showEditProfile = false
-    @State private var confirmLogout = false
-
-    private var isMe: Bool { session.currentUser?.id == user.id }
 
     var body: some View {
-        if user.modelContext == nil {
+        ViewModelHost(make: { $0.makeProfileViewModel(user: user) }) { ProfileContent(model: $0) }
+    }
+}
+
+private struct ProfileContent: View {
+    @Bindable var model: ProfileViewModel
+    @Environment(AppSession.self) private var session
+    @State private var showEditProfile = false
+    @State private var showFavoritesEditor = false
+    @State private var confirmLogout = false
+
+    private var user: UserAccount { model.user }
+
+    var body: some View {
+        if !model.isAvailable {
             ContentUnavailableView("Профиль недоступен", systemImage: "person.slash")
         } else {
             content
@@ -30,53 +39,19 @@ struct ProfileView: View {
     }
 
     private var content: some View {
-        // Для чужого профиля — только публичные подборки; для своего — все.
-        let list = user.collections(visibleTo: session.currentUser)
-        return ScrollView {
-            VStack(spacing: 16) {
-                VStack(spacing: 8) {
-                    AvatarView(name: user.username, size: 88)
-                    Text("@\(user.username)").font(.title2.bold())
-                    if user.isDemo {
-                        Text("Демо-профиль").font(.caption.weight(.semibold))
-                            .padding(.horizontal, 8).padding(.vertical, 3)
-                            .background(.thinMaterial, in: Capsule())
-                    }
-                    if !user.bio.isEmpty {
-                        Text(user.bio).multilineTextAlignment(.center).foregroundStyle(.secondary)
-                    } else if isMe {
-                        Text("Добавьте описание профиля через меню ⋯").foregroundStyle(.tertiary).font(.footnote)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-
-                HStack {
-                    Text(isMe ? "Мои подборки" : "Публичные подборки").font(.headline)
-                    Spacer()
-                }
-
-                if list.isEmpty {
-                    ContentUnavailableView(
-                        isMe ? "Пока нет подборок" : "Нет публичных подборок",
-                        systemImage: "rectangle.stack",
-                        description: Text(
-                            isMe
-                                ? "Создайте первую подборку на вкладке «Подборки»."
-                                : "Этот пользователь пока ничем не поделился."))
-                } else {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
-                        ForEach(list) { c in
-                            NavigationLink(value: c) { CollectionCard(collection: c) }.buttonStyle(.plain)
-                        }
-                    }
-                }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                header
+                favoritesSection
+                collectionsSection
+                reviewsSection
             }
             .padding()
         }
-        .navigationTitle(isMe ? "Профиль" : "@\(user.username)")
+        .navigationTitle(model.isMe ? "Профиль" : "@\(user.username)")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if isMe {
+            if model.isMe {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Редактировать профиль", systemImage: "pencil") { showEditProfile = true }
@@ -91,9 +66,162 @@ struct ProfileView: View {
             }
         }
         .sheet(isPresented: $showEditProfile) { EditProfileView() }
+        .sheet(isPresented: $showFavoritesEditor) { FavoritesEditorView(model: model) }
         .confirmationDialog("Выйти из аккаунта?", isPresented: $confirmLogout, titleVisibility: .visible) {
             Button("Выйти", role: .destructive) { session.logout() }
             Button("Отмена", role: .cancel) {}
+        }
+        .errorAlert($model.errorMessage)
+    }
+
+    // MARK: Секции
+
+    private var header: some View {
+        VStack(spacing: 8) {
+            AvatarView(name: user.username, size: 88)
+            Text("@\(user.username)").font(.title2.bold())
+            if user.isDemo {
+                Text("Демо-профиль").font(.caption.weight(.semibold))
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(.thinMaterial, in: Capsule())
+            }
+            if !user.bio.isEmpty {
+                Text(user.bio).multilineTextAlignment(.center).foregroundStyle(.secondary)
+            } else if model.isMe {
+                Text("Добавьте описание профиля через меню ⋯").foregroundStyle(.tertiary).font(.footnote)
+            }
+            HStack(spacing: 16) {
+                stat(model.favorites.count, "любимых")
+                stat(model.collections.count, "подборок")
+                stat(model.reviews.count, "отзывов")
+            }
+            .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func stat(_ value: Int, _ title: String) -> some View {
+        VStack(spacing: 0) {
+            Text("\(value)").font(.headline)
+            Text(title).font(.caption).foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func sectionHeader(_ title: String, action: (title: String, run: () -> Void)? = nil) -> some View {
+        HStack {
+            Text(title).font(.headline)
+            Spacer()
+            if let action { Button(action.title, action: action.run).font(.subheadline) }
+        }
+    }
+
+    private var favoritesSection: some View {
+        let list = model.favorites
+        return VStack(alignment: .leading, spacing: 10) {
+            sectionHeader(
+                "Любимые фильмы",
+                action: model.isMe && !list.isEmpty ? ("Изменить", { showFavoritesEditor = true }) : nil)
+            if list.isEmpty {
+                Text(
+                    model.isMe
+                        ? "Добавляйте фильмы сердечком на экране фильма — они появятся здесь."
+                        : "Пока не выбраны."
+                )
+                .foregroundStyle(.secondary).font(.subheadline)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 12) {
+                        ForEach(list) { fav in
+                            NavigationLink(value: Movie(favorite: fav)) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    PosterImage(path: fav.posterPath, title: fav.title, size: .w342, ratio: 1.5)
+                                        .frame(width: 110)
+                                    Text(fav.title).font(.caption.weight(.medium)).lineLimit(2)
+                                        .frame(width: 110, alignment: .leading)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var collectionsSection: some View {
+        let list = model.collections
+        return VStack(alignment: .leading, spacing: 10) {
+            sectionHeader(model.isMe ? "Мои подборки" : "Публичные подборки")
+            if list.isEmpty {
+                Text(
+                    model.isMe
+                        ? "Создайте первую подборку на вкладке «Подборки»."
+                        : "Этот пользователь пока ничем не поделился."
+                )
+                .foregroundStyle(.secondary).font(.subheadline)
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
+                    ForEach(list) { c in
+                        NavigationLink(value: c) { CollectionCard(collection: c) }.buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    private var reviewsSection: some View {
+        let list = model.reviews
+        return VStack(alignment: .leading, spacing: 10) {
+            sectionHeader(model.isMe ? "Мои отзывы" : "Отзывы")
+            if list.isEmpty {
+                Text(
+                    model.isMe
+                        ? "Оценивайте фильмы и пишите отзывы на их страницах."
+                        : "Пока нет отзывов."
+                )
+                .foregroundStyle(.secondary).font(.subheadline)
+            } else {
+                ForEach(list) { ReviewRow(review: $0, showMovie: true) }
+            }
+        }
+    }
+}
+
+// MARK: - Редактор любимых
+
+private struct FavoritesEditorView: View {
+    let model: ProfileViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(model.favorites) { fav in
+                    HStack(spacing: 12) {
+                        PosterImage(path: fav.posterPath, title: fav.title, size: .w185, ratio: 1.0).frame(width: 44)
+                        VStack(alignment: .leading) {
+                            Text(fav.title)
+                            if let y = fav.year { Text(y).font(.caption).foregroundStyle(.secondary) }
+                        }
+                    }
+                }
+                .onDelete { offsets in
+                    let ids = offsets.map { model.favorites[$0].movieID }
+                    ids.forEach { model.removeFavorite(movieID: $0) }
+                }
+                .onMove { model.moveFavorites(from: $0, to: $1) }
+            }
+            .environment(\.editMode, .constant(.active))
+            .navigationTitle("Любимые фильмы")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } } }
+            .overlay {
+                if model.favorites.isEmpty {
+                    ContentUnavailableView("Список пуст", systemImage: "heart")
+                }
+            }
+            .errorAlert(Binding(get: { model.errorMessage }, set: { model.errorMessage = $0 }))
         }
     }
 }
@@ -118,7 +246,10 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Сохранить") {
-                        do { try session.updateBio(bio); dismiss() } catch { errorMessage = userMessage(for: error) }
+                        do {
+                            try session.updateBio(bio)
+                            dismiss()
+                        } catch { errorMessage = userMessage(for: error) }
                     }
                     .disabled(bio.count > 160)
                 }

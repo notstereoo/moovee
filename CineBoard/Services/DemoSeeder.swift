@@ -11,7 +11,10 @@ enum DemoSeeder {
     static func seedIfNeeded(_ context: ModelContext) {
         let count =
             (try? context.fetchCount(FetchDescriptor<UserAccount>(predicate: #Predicate { $0.isDemo == true }))) ?? 0
-        guard count == 0 else { return }
+        guard count == 0 else {
+            seedSocialIfNeeded(context)
+            return
+        }
 
         func make(_ username: String, bio: String, _ collections: [Demo]) {
             let user = UserAccount(username: username, bio: bio, isDemo: true)
@@ -67,6 +70,77 @@ enum DemoSeeder {
                     ]),
             ])
         try? context.save()
+        seedSocialIfNeeded(context)
+    }
+
+    // MARK: Любимые и отзывы демо-пользователей
+
+    private struct DemoReview { let movie: Seed; let rating: Int; let text: String; let daysAgo: Int }
+
+    private static let annaReviews: [DemoReview] = [
+        DemoReview(
+            movie: Seed(id: 335984, title: "Бегущий по лезвию 2049", year: "2017"), rating: 9,
+            text: "Визуально — эталон. Каждый кадр можно вешать на стену, а тишина работает лучше диалогов.", daysAgo: 12),
+        DemoReview(
+            movie: Seed(id: 64690, title: "Драйв", year: "2011"), rating: 8,
+            text: "Минимум слов, максимум настроения. Саундтрек до сих пор в плейлисте.", daysAgo: 30),
+        DemoReview(
+            movie: Seed(id: 496243, title: "Паразиты", year: "2019"), rating: 10,
+            text: "Редкий случай, когда хайп полностью оправдан. Лучше идти, ничего о сюжете не зная.", daysAgo: 5),
+    ]
+    private static let maxReviews: [DemoReview] = [
+        DemoReview(
+            movie: Seed(id: 496243, title: "Паразиты", year: "2019"), rating: 9,
+            text: "Спорили после просмотра полвечера — это лучшая рекомендация.", daysAgo: 8),
+        DemoReview(
+            movie: Seed(id: 329865, title: "Прибытие", year: "2016"), rating: 9,
+            text: "Фантастика, от которой щемит сердце. Финал заставляет пересмотреть всё с начала.", daysAgo: 20),
+        DemoReview(
+            movie: Seed(id: 120467, title: "Отель «Гранд Будапешт»", year: "2014"), rating: 8, text: "", daysAgo: 3),
+    ]
+    private static let annaFavorites: [Seed] = [
+        Seed(id: 335984, title: "Бегущий по лезвию 2049", year: "2017"),
+        Seed(id: 64690, title: "Драйв", year: "2011"),
+        Seed(id: 152601, title: "Она", year: "2013"),
+        Seed(id: 496243, title: "Паразиты", year: "2019"),
+    ]
+    private static let maxFavorites: [Seed] = [
+        Seed(id: 329865, title: "Прибытие", year: "2016"),
+        Seed(id: 244786, title: "Одержимость", year: "2014"),
+        Seed(id: 129, title: "Унесённые призраками", year: "2001"),
+    ]
+
+    private static func movie(_ s: Seed) -> Movie {
+        Movie(
+            id: s.id, title: s.title, overview: nil, posterPath: nil, backdropPath: nil,
+            releaseDate: s.year, voteAverage: nil, runtime: nil, genres: nil)
+    }
+
+    /// Добавляет демо-пользователям любимые фильмы и отзывы (в том числе при обновлении со старой версии).
+    static func seedSocialIfNeeded(_ context: ModelContext) {
+        let users = (try? context.fetch(FetchDescriptor<UserAccount>(predicate: #Predicate { $0.isDemo == true }))) ?? []
+        for (name, reviews, favorites) in [
+            ("anna_films", annaReviews, annaFavorites), ("max_cinema", maxReviews, maxFavorites),
+        ] {
+            guard let user = users.first(where: { $0.username == name }) else { continue }
+            if user.reviews.isEmpty {
+                for r in reviews {
+                    let review = Review(movie: movie(r.movie), rating: r.rating, text: r.text)
+                    review.createdAt = Calendar.current.date(byAdding: .day, value: -r.daysAgo, to: .now) ?? .now
+                    review.updatedAt = review.createdAt
+                    context.insert(review)
+                    review.author = user
+                }
+            }
+            if user.favorites.isEmpty {
+                for (index, f) in favorites.enumerated() {
+                    let fav = FavoriteMovie(movie: movie(f), position: index)
+                    context.insert(fav)
+                    fav.user = user
+                }
+            }
+        }
+        try? context.save()
     }
 
     /// Подтягивает постеры демо-фильмов из каталога (если ключ задан).
@@ -75,15 +149,26 @@ enum DemoSeeder {
         let items =
             ((try? context.fetch(FetchDescriptor<CollectionItem>(predicate: #Predicate { $0.posterPath == nil }))) ?? [])
             .filter { $0.collection?.owner?.isDemo == true }
-        guard !items.isEmpty else { return }
+        let reviews =
+            ((try? context.fetch(FetchDescriptor<Review>(predicate: #Predicate { $0.posterPath == nil }))) ?? [])
+            .filter { $0.author?.isDemo == true }
+        let favorites =
+            ((try? context.fetch(FetchDescriptor<FavoriteMovie>(predicate: #Predicate { $0.posterPath == nil }))) ?? [])
+            .filter { $0.user?.isDemo == true }
+        guard !(items.isEmpty && reviews.isEmpty && favorites.isEmpty) else { return }
+
         var cache: [Int: Movie] = [:]
-        for item in items {
-            if cache[item.movieID] == nil { cache[item.movieID] = try? await catalog.details(id: item.movieID) }
-            if let m = cache[item.movieID] {
-                item.posterPath = m.posterPath
-                if let r = m.voteAverage, r > 0 { item.rating = r }
-            }
+        func lookup(_ id: Int) async -> Movie? {
+            if cache[id] == nil { cache[id] = try? await catalog.details(id: id) }
+            return cache[id]
         }
+        for item in items {
+            guard let m = await lookup(item.movieID) else { continue }
+            item.posterPath = m.posterPath
+            if let r = m.voteAverage, r > 0 { item.rating = r }
+        }
+        for review in reviews { review.posterPath = await lookup(review.movieID)?.posterPath }
+        for fav in favorites { fav.posterPath = await lookup(fav.movieID)?.posterPath }
         try? context.save()
     }
 }

@@ -41,7 +41,33 @@ extension Movie {
     }
 }
 
+extension Movie {
+    init(review r: Review) {
+        self.init(
+            id: r.movieID, title: r.movieTitle, overview: nil, posterPath: r.posterPath,
+            backdropPath: nil, releaseDate: r.year, voteAverage: nil, runtime: nil, genres: nil)
+    }
+
+    init(favorite f: FavoriteMovie) {
+        self.init(
+            id: f.movieID, title: f.title, overview: nil, posterPath: f.posterPath,
+            backdropPath: nil, releaseDate: f.year, voteAverage: nil, runtime: nil, genres: nil)
+    }
+}
+
 // MARK: - Пользовательские данные (SwiftData)
+
+/// Все модели SwiftData в одном месте — для приложения, превью и тестов.
+enum AppSchema {
+    static let models: [any PersistentModel.Type] = [
+        UserAccount.self, MovieCollection.self, CollectionItem.self, Review.self, FavoriteMovie.self,
+    ]
+
+    static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
+        try ModelContainer(
+            for: Schema(models), configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory))
+    }
+}
 
 @Model
 final class UserAccount {
@@ -57,6 +83,12 @@ final class UserAccount {
 
     @Relationship(deleteRule: .cascade, inverse: \MovieCollection.owner)
     var collections: [MovieCollection] = []
+
+    @Relationship(deleteRule: .cascade, inverse: \Review.author)
+    var reviews: [Review] = []
+
+    @Relationship(deleteRule: .cascade, inverse: \FavoriteMovie.user)
+    var favorites: [FavoriteMovie] = []
 
     init(username: String, bio: String = "", passwordHash: Data? = nil, salt: Data? = nil, isDemo: Bool = false) {
         self.id = UUID()
@@ -129,6 +161,56 @@ final class CollectionItem {
         self.year = movie.year
         self.posterPath = movie.posterPath
         self.rating = (movie.voteAverage ?? 0) > 0 ? movie.voteAverage : nil
+        self.addedAt = .now
+    }
+}
+
+/// Оценка (1–10) и необязательный текст отзыва. Один отзыв на пару (автор, фильм) — это обеспечивает репозиторий.
+@Model
+final class Review {
+    @Attribute(.unique) var id: UUID
+    var movieID: Int
+    var movieTitle: String
+    var year: String?
+    var posterPath: String?
+    var rating: Int
+    var text: String
+    var createdAt: Date
+    var updatedAt: Date
+    var author: UserAccount?
+
+    init(movie: Movie, rating: Int, text: String) {
+        self.id = UUID()
+        self.movieID = movie.id
+        self.movieTitle = movie.title
+        self.year = movie.year
+        self.posterPath = movie.posterPath
+        self.rating = rating
+        self.text = text
+        self.createdAt = .now
+        self.updatedAt = .now
+    }
+}
+
+/// Любимый фильм в профиле; `position` задаёт порядок.
+@Model
+final class FavoriteMovie {
+    @Attribute(.unique) var id: UUID
+    var movieID: Int
+    var title: String
+    var year: String?
+    var posterPath: String?
+    var position: Int
+    var addedAt: Date
+    var user: UserAccount?
+
+    init(movie: Movie, position: Int) {
+        self.id = UUID()
+        self.movieID = movie.id
+        self.title = movie.title
+        self.year = movie.year
+        self.posterPath = movie.posterPath
+        self.position = position
         self.addedAt = .now
     }
 }

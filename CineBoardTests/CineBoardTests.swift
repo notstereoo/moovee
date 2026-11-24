@@ -8,9 +8,7 @@ final class CineBoardTests: XCTestCase {
     private var context: ModelContext { container.mainContext }
 
     override func setUp() async throws {
-        container = try ModelContainer(
-            for: UserAccount.self, MovieCollection.self, CollectionItem.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        container = try AppSchema.makeContainer(inMemory: true)
     }
 
     private func makeSession() -> AppSession {

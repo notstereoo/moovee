@@ -8,7 +8,7 @@ struct CineBoardApp: App {
 
     init() {
         do {
-            let container = try ModelContainer(for: UserAccount.self, MovieCollection.self, CollectionItem.self)
+            let container = try AppSchema.makeContainer()
             DemoSeeder.seedIfNeeded(container.mainContext)
             self.container = container
             _dependencies = State(initialValue: .local(context: container.mainContext))
@@ -30,10 +30,7 @@ struct CineBoardApp: App {
 }
 
 #Preview {
-    let container = try! ModelContainer(
-        for: UserAccount.self, MovieCollection.self, CollectionItem.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
+    let container = try! AppSchema.makeContainer(inMemory: true)
     DemoSeeder.seedIfNeeded(container.mainContext)
     let deps = AppDependencies.local(context: container.mainContext)
     return RootView()

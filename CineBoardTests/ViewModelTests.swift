@@ -10,9 +10,7 @@ final class ViewModelTests: XCTestCase {
     private var context: ModelContext { container.mainContext }
 
     override func setUp() async throws {
-        container = try ModelContainer(
-            for: UserAccount.self, MovieCollection.self, CollectionItem.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        container = try AppSchema.makeContainer(inMemory: true)
         deps = .local(
             context: context, catalog: StubCatalog(), defaults: UserDefaults(suiteName: UUID().uuidString)!)
     }
