@@ -22,6 +22,8 @@ final class ProfileViewModel {
 
     var isMe: Bool { session.currentUser?.id == user.id }
     var isAvailable: Bool { user.modelContext != nil }
+    /// Закрытый профиль чужого пользователя: показываем только имя.
+    var isContentHidden: Bool { !user.isContentVisible(to: session.currentUser) }
 
     /// Для чужого профиля — только публичные подборки; для своего — все.
     var collections: [MovieCollection] {
@@ -31,12 +33,12 @@ final class ProfileViewModel {
 
     var favorites: [FavoriteMovie] {
         _ = favoritesRepository.revision
-        return favoritesRepository.favorites(of: user)
+        return isContentHidden ? [] : favoritesRepository.favorites(of: user)
     }
 
     var reviews: [Review] {
         _ = reviewRepository.revision
-        return reviewRepository.reviews(by: user)
+        return isContentHidden ? [] : reviewRepository.reviews(by: user)
     }
 
     func removeFavorite(movieID: Int) {

@@ -10,10 +10,8 @@
         @MainActor
         static func makeDependencies() throws -> (ModelContainer, AppDependencies) {
             let container = try AppSchema.makeContainer(inMemory: true)
-            let suite = "uitest-\(UUID().uuidString)"
-            let defaults = UserDefaults(suiteName: suite) ?? .standard
-            defaults.removePersistentDomain(forName: suite)
-            let deps = AppDependencies.local(context: container.mainContext, catalog: UITestCatalog(), defaults: defaults)
+            let deps = AppDependencies.local(
+                context: container.mainContext, catalog: UITestCatalog(), secrets: InMemorySecretStore())
             return (container, deps)
         }
     }

@@ -68,8 +68,10 @@ enum AppSchema {
     ]
 
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
-        try ModelContainer(
+        let container = try ModelContainer(
             for: Schema(models), configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory))
+        if !inMemory { StoreProtection.apply(to: container) }
+        return container
     }
 }
 
@@ -79,11 +81,14 @@ final class UserAccount {
     /// Всегда в нижнем регистре.
     @Attribute(.unique) var username: String
     var bio: String
+    /// Устарело: используется только для переноса старых данных в Keychain, затем остаётся пустым.
     var passwordHash: Data?
     var salt: Data?
     /// Демо-профили не имеют пароля и не позволяют войти.
     var isDemo: Bool
     var createdAt: Date
+    /// Закрытый профиль: другие пользователи не видят любимые, подборки и список отзывов.
+    var isProfilePrivate: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \MovieCollection.owner)
     var collections: [MovieCollection] = []
@@ -104,10 +109,14 @@ final class UserAccount {
         self.createdAt = .now
     }
 
+    /// Видно ли содержимое профиля (любимые, подборки, отзывы) этому зрителю.
+    func isContentVisible(to viewer: UserAccount?) -> Bool { !isProfilePrivate || viewer?.id == id }
+
     /// Коллекции этого пользователя, которые разрешено видеть `viewer`:
-    /// владельцу — все, остальным — только публичные.
+    /// владельцу — все, остальным — только публичные (если профиль открыт).
     func collections(visibleTo viewer: UserAccount?) -> [MovieCollection] {
-        collections.filter { $0.isVisible(to: viewer) }.sorted { $0.createdAt > $1.createdAt }
+        guard isContentVisible(to: viewer) else { return [] }
+        return collections.filter { $0.isVisible(to: viewer) }.sorted { $0.createdAt > $1.createdAt }
     }
 }
 
@@ -139,10 +148,11 @@ final class MovieCollection {
         coverPosterPath ?? sortedItems.first(where: { $0.posterPath != nil })?.posterPath
     }
 
+    /// Владелец видит всё; остальные — только публичные подборки открытых профилей.
     func isVisible(to viewer: UserAccount?) -> Bool {
-        if isPublic { return true }
-        guard let viewer, let owner else { return false }
-        return owner.id == viewer.id
+        guard let owner else { return isPublic }
+        if viewer?.id == owner.id { return true }
+        return isPublic && !owner.isProfilePrivate
     }
 }
 

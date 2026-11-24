@@ -7,6 +7,9 @@ protocol AuthProvider {
     func login(username: String, password: String) throws -> UserAccount
     func user(id: UUID) -> UserAccount?
     func updateBio(_ bio: String, for user: UserAccount) throws
+    func setProfilePrivate(_ isPrivate: Bool, for user: UserAccount) throws
+    /// Удаляет аккаунт и все его данные; требует пароль.
+    func deleteAccount(_ user: UserAccount, password: String) throws
 }
 
 /// Хранилище подборок. Каждая изменяющая операция проверяет, что `user` — владелец.

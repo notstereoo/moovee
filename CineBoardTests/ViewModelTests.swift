@@ -12,7 +12,7 @@ final class ViewModelTests: XCTestCase {
     override func setUp() async throws {
         container = try AppSchema.makeContainer(inMemory: true)
         deps = .local(
-            context: context, catalog: StubCatalog(), defaults: UserDefaults(suiteName: UUID().uuidString)!)
+            context: context, catalog: StubCatalog(), secrets: InMemorySecretStore())
     }
 
     private func movie(_ id: Int) -> Movie {

@@ -11,7 +11,7 @@ final class SocialTests: XCTestCase {
 
     override func setUp() async throws {
         container = try AppSchema.makeContainer(inMemory: true)
-        deps = .local(context: context, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        deps = .local(context: context, secrets: InMemorySecretStore())
     }
 
     private func movie(_ id: Int) -> Movie {

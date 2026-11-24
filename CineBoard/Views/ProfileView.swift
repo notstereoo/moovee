@@ -26,6 +26,7 @@ private struct ProfileContent: View {
     @Environment(AppSession.self) private var session
     @State private var showEditProfile = false
     @State private var showFavoritesEditor = false
+    @State private var showDeleteAccount = false
     @State private var confirmLogout = false
     @ScaledMetric(relativeTo: .caption) private var posterWidth: CGFloat = 110
 
@@ -43,9 +44,13 @@ private struct ProfileContent: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
-                favoritesSection
-                collectionsSection
-                reviewsSection
+                if model.isContentHidden {
+                    closedNotice
+                } else {
+                    favoritesSection
+                    collectionsSection
+                    reviewsSection
+                }
             }
             .padding()
         }
@@ -56,6 +61,9 @@ private struct ProfileContent: View {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Редактировать профиль", systemImage: "pencil") { showEditProfile = true }
+                        Button("Удалить аккаунт…", systemImage: "person.crop.circle.badge.minus", role: .destructive) {
+                            showDeleteAccount = true
+                        }
                         Button("Выйти", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                             confirmLogout = true
                         }
@@ -67,6 +75,7 @@ private struct ProfileContent: View {
             }
         }
         .sheet(isPresented: $showEditProfile) { EditProfileView() }
+        .sheet(isPresented: $showDeleteAccount) { DeleteAccountView() }
         .sheet(isPresented: $showFavoritesEditor) { FavoritesEditorView(model: model) }
         .confirmationDialog("Выйти из аккаунта?", isPresented: $confirmLogout, titleVisibility: .visible) {
             Button("Выйти", role: .destructive) { session.logout() }
@@ -91,12 +100,14 @@ private struct ProfileContent: View {
             } else if model.isMe {
                 Text("Добавьте описание профиля через меню ⋯").foregroundStyle(.tertiary).font(.footnote)
             }
-            // На крупном шрифте счётчики встают в столбик, а не рвут слова.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 16) { stats }
-                VStack(spacing: 8) { stats }
+            if !model.isContentHidden {
+                // На крупном шрифте счётчики встают в столбик, а не рвут слова.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 16) { stats }
+                    VStack(spacing: 8) { stats }
+                }
+                .padding(.top, 4)
             }
-            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
     }
@@ -106,6 +117,12 @@ private struct ProfileContent: View {
         stat(model.favorites.count, "любимых")
         stat(model.collections.count, "подборок")
         stat(model.reviews.count, "отзывов")
+    }
+
+    private var closedNotice: some View {
+        ContentUnavailableView(
+            "Профиль закрыт", systemImage: "lock.fill",
+            description: Text("Пользователь скрыл свои подборки, любимые фильмы и список отзывов."))
     }
 
     private func stat(_ value: Int, _ title: LocalizedStringKey) -> some View {
@@ -240,6 +257,7 @@ struct EditProfileView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.dismiss) private var dismiss
     @State private var bio = ""
+    @State private var isPrivate = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -249,6 +267,13 @@ struct EditProfileView: View {
                     TextField("Пара слов о ваших вкусах", text: $bio, axis: .vertical).lineLimit(3...6)
                 }
                 Section { Text("\(bio.count)/160").foregroundStyle(.secondary).font(.footnote) }
+                Section {
+                    Toggle("Закрытый профиль", isOn: $isPrivate)
+                } footer: {
+                    Text(
+                        "Другие пользователи не увидят ваши подборки, любимые фильмы и список отзывов. Отзывы под фильмами остаются видны всем."
+                    )
+                }
             }
             .navigationTitle("Профиль")
             .navigationBarTitleDisplayMode(.inline)
@@ -258,13 +283,53 @@ struct EditProfileView: View {
                     Button("Сохранить") {
                         do {
                             try session.updateBio(bio)
+                            try session.setProfilePrivate(isPrivate)
                             dismiss()
                         } catch { errorMessage = userMessage(for: error) }
                     }
                     .disabled(bio.count > 160)
                 }
             }
-            .onAppear { bio = session.currentUser?.bio ?? "" }
+            .onAppear {
+                bio = session.currentUser?.bio ?? ""
+                isPrivate = session.currentUser?.isProfilePrivate ?? false
+            }
+            .errorAlert($errorMessage)
+        }
+    }
+}
+
+/// Необратимое удаление аккаунта: подтверждается паролем.
+struct DeleteAccountView: View {
+    @Environment(AppSession.self) private var session
+    @Environment(\.dismiss) private var dismiss
+    @State private var password = ""
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(
+                        "Профиль, подборки, отзывы и любимые фильмы будут удалены с этого устройства безвозвратно. Восстановить их не получится."
+                    )
+                }
+                Section("Подтвердите паролем") {
+                    SecureField("Пароль", text: $password).textContentType(.password)
+                }
+                Section {
+                    Button("Удалить аккаунт и все данные", role: .destructive) {
+                        do {
+                            try session.deleteAccount(password: password)
+                            dismiss()
+                        } catch { errorMessage = userMessage(for: error) }
+                    }
+                    .disabled(password.isEmpty)
+                }
+            }
+            .navigationTitle("Удаление аккаунта")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
             .errorAlert($errorMessage)
         }
     }

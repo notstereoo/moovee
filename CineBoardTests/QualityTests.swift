@@ -40,7 +40,7 @@ final class QualityTests: XCTestCase {
 
     override func setUp() async throws {
         container = try AppSchema.makeContainer(inMemory: true)
-        deps = .local(context: context, catalog: FakeCatalog(), defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        deps = .local(context: context, catalog: FakeCatalog(), secrets: InMemorySecretStore())
     }
 
     private func movie(_ id: Int, title: String? = nil, year: String? = "2020", rating: Double? = 7) -> Movie {

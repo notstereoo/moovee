@@ -23,6 +23,10 @@ targets:
         CFBundleDisplayName: CineBoard
         TMDBAPIKey: "$(TMDB_API_KEY)"
         UILaunchScreen: {}
+    entitlements:
+      path: CineBoard/CineBoard.entitlements
+      properties:
+        com.apple.developer.default-data-protection: NSFileProtectionComplete
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.CineBoard

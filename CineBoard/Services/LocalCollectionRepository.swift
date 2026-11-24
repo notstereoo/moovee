@@ -28,7 +28,10 @@ final class LocalCollectionRepository: CollectionRepository {
     }
 
     func publicCollections(excluding user: UserAccount?) -> [MovieCollection] {
-        allCollections().filter { $0.isPublic && $0.owner != nil && $0.owner?.id != user?.id }
+        allCollections().filter {
+            guard let owner = $0.owner else { return false }
+            return $0.isPublic && !owner.isProfilePrivate && owner.id != user?.id
+        }
     }
 
     private func allCollections() -> [MovieCollection] {

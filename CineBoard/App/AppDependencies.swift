@@ -24,10 +24,13 @@ final class AppDependencies {
 
     /// Локальная конфигурация поверх SwiftData.
     static func local(
-        context: ModelContext, catalog: any MovieCatalog = CachingCatalog.standard(), defaults: UserDefaults = .standard
+        context: ModelContext, catalog: any MovieCatalog = CachingCatalog.standard(),
+        secrets: any SecretStore = KeychainSecretStore.standard, legacyDefaults: UserDefaults? = nil
     ) -> AppDependencies {
-        AppDependencies(
-            session: AppSession(context: context, defaults: defaults),
+        let auth = LocalAuthProvider(context: context, secrets: secrets)
+        auth.migrateLegacyCredentials()
+        return AppDependencies(
+            session: AppSession(auth: auth, secrets: secrets, legacyDefaults: legacyDefaults),
             collections: LocalCollectionRepository(context: context),
             reviews: LocalReviewRepository(context: context),
             favorites: LocalFavoritesRepository(context: context),

@@ -11,8 +11,8 @@ final class CineBoardTests: XCTestCase {
         container = try AppSchema.makeContainer(inMemory: true)
     }
 
-    private func makeSession() -> AppSession {
-        AppSession(context: context, defaults: UserDefaults(suiteName: UUID().uuidString)!)
+    private func makeSession(secrets: InMemorySecretStore = InMemorySecretStore()) -> AppSession {
+        AppSession(auth: LocalAuthProvider(context: context, secrets: secrets), secrets: secrets)
     }
 
     private func movie(_ id: Int = 1) -> Movie {
@@ -59,10 +59,10 @@ final class CineBoardTests: XCTestCase {
     }
 
     func testSessionRestoresAfterRelaunch() throws {
-        let defaults = UserDefaults(suiteName: UUID().uuidString)!
-        let first = AppSession(context: context, defaults: defaults)
+        let secrets = InMemorySecretStore()
+        let first = makeSession(secrets: secrets)
         try first.register(username: "carol", password: "password1")
-        let second = AppSession(context: context, defaults: defaults)
+        let second = makeSession(secrets: secrets)
         XCTAssertEqual(second.currentUser?.username, "carol")
     }
 

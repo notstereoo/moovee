@@ -21,7 +21,7 @@ struct CineBoardApp: App {
             let container = try AppSchema.makeContainer()
             DemoSeeder.seedIfNeeded(container.mainContext)
             self.container = container
-            _dependencies = State(initialValue: .local(context: container.mainContext))
+            _dependencies = State(initialValue: .local(context: container.mainContext, legacyDefaults: .standard))
         } catch {
             fatalError("Не удалось открыть локальное хранилище: \(error)")
         }
