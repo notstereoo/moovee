@@ -87,7 +87,7 @@ final class ProfileSocialTests: XCTestCase {
 
         let banner = try XCTUnwrap(ImageProcessing.bannerJPEG(from: imageData(width: 800, height: 1600)))
         let bannerImage = try XCTUnwrap(UIImage(data: banner))
-        XCTAssertEqual(bannerImage.size.width / bannerImage.size.height, 3, accuracy: 0.01)
+        XCTAssertEqual(bannerImage.size.width / bannerImage.size.height, 2, accuracy: 0.01)
 
         XCTAssertNil(ImageProcessing.avatarJPEG(from: Data([0, 1, 2])), "не изображение")
     }
@@ -370,5 +370,101 @@ final class ProfileSocialTests: XCTestCase {
         XCTAssertTrue(deps.social.areFriends(anna, max))
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<Follow>()), 2)
         XCTAssertGreaterThan(deps.social.totalLikes(ofOwner: max), 0)
+    }
+
+    // MARK: Кадрирование
+
+    func testCropGeometryCoversFrameAndClamps() {
+        let g = CropGeometry(imageSize: CGSize(width: 2000, height: 1000), cropSize: CGSize(width: 400, height: 400))
+        XCTAssertEqual(g.baseScale, 0.4, accuracy: 0.0001)  // высота определяет масштаб
+
+        // По умолчанию — центр: квадрат 1000×1000 посередине.
+        XCTAssertEqual(g.cropRect(zoom: 1, offset: .zero), CGRect(x: 500, y: 0, width: 1000, height: 1000))
+
+        // Сдвиг фото вправо показывает его левую часть; за край выйти нельзя.
+        XCTAssertEqual(g.cropRect(zoom: 1, offset: CGSize(width: 200, height: 0)).minX, 0, accuracy: 0.001)
+        XCTAssertEqual(g.clampedOffset(CGSize(width: 999, height: 999), zoom: 1), CGSize(width: 200, height: 0))
+        XCTAssertEqual(g.clampedOffset(CGSize(width: -999, height: -999), zoom: 1), CGSize(width: -200, height: 0))
+
+        // Приближение уменьшает область и расширяет допустимый сдвиг.
+        let zoomed = g.cropRect(zoom: 2, offset: .zero)
+        XCTAssertEqual(zoomed.width, 500, accuracy: 0.001)
+        XCTAssertEqual(g.clampedOffset(CGSize(width: 999, height: 999), zoom: 2), CGSize(width: 600, height: 200))
+        XCTAssertEqual(g.clampedZoom(0.2), 1)
+        XCTAssertEqual(g.clampedZoom(99), CropGeometry.maxZoom)
+
+        // Область всегда внутри изображения.
+        for zoom in [1, 1.5, 3, 5] as [CGFloat] {
+            for off in [CGSize(width: -9999, height: -9999), CGSize(width: 9999, height: 9999), .zero] {
+                let r = g.cropRect(zoom: zoom, offset: off)
+                XCTAssertGreaterThanOrEqual(r.minX, -0.001)
+                XCTAssertGreaterThanOrEqual(r.minY, -0.001)
+                XCTAssertLessThanOrEqual(r.maxX, 2000.001)
+                XCTAssertLessThanOrEqual(r.maxY, 1000.001)
+            }
+        }
+    }
+
+    func testCropPicksChosenRegion() throws {
+        // Слева красная половина, справа синяя.
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 200, height: 100), format: format).image { ctx in
+            UIColor.red.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 100, height: 100))
+            UIColor.blue.setFill()
+            ctx.fill(CGRect(x: 100, y: 0, width: 100, height: 100))
+        }
+        func centerColor(_ data: Data) throws -> (r: CGFloat, b: CGFloat) {
+            let out = try XCTUnwrap(UIImage(data: data))
+            XCTAssertEqual(out.size.width * out.scale, 64, accuracy: 1)
+            let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 1))
+            let px = renderer.image { _ in out.draw(in: CGRect(x: -32, y: -32, width: 64, height: 64)) }
+            let sample = try XCTUnwrap(px.cgImage?.dataProvider?.data as Data?)
+            // Формат пикселей — BGRA.
+            let b = CGFloat(sample[0]) / 255
+            let r = CGFloat(sample[2]) / 255
+            return (r, b)
+        }
+        let right = try XCTUnwrap(
+            ImageProcessing.crop(image, rect: CGRect(x: 100, y: 0, width: 100, height: 100), outputSize: CGSize(width: 64, height: 64)))
+        let left = try XCTUnwrap(
+            ImageProcessing.crop(image, rect: CGRect(x: 0, y: 0, width: 100, height: 100), outputSize: CGSize(width: 64, height: 64)))
+        let rightColor = try centerColor(right)
+        let leftColor = try centerColor(left)
+        XCTAssertGreaterThan(rightColor.b, 0.7)
+        XCTAssertLessThan(rightColor.r, 0.3)
+        XCTAssertGreaterThan(leftColor.r, 0.7)
+        XCTAssertLessThan(leftColor.b, 0.3)
+        XCTAssertNil(ImageProcessing.crop(image, rect: .zero, outputSize: CGSize(width: 10, height: 10)))
+    }
+
+    func testNormalizedImageLimitsSize() {
+        let big = UIGraphicsImageRenderer(size: CGSize(width: 4000, height: 2000)).image { ctx in
+            UIColor.green.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 4000, height: 2000))
+        }
+        let normalized = ImageProcessing.normalized(big, maxSide: 1000)
+        XCTAssertEqual(max(normalized.size.width, normalized.size.height) * normalized.scale, 1000, accuracy: 1)
+        XCTAssertEqual(normalized.size.width / normalized.size.height, 2, accuracy: 0.01)
+    }
+
+    func testEditorAcceptsCroppedImages() throws {
+        let me = try signUp("crop")
+        let editor = deps.makeProfileEditorViewModel()
+        let avatar = try XCTUnwrap(ImageProcessing.avatarJPEG(from: imageData(width: 400, height: 400)))
+        let banner = try XCTUnwrap(ImageProcessing.bannerJPEG(from: imageData(width: 800, height: 400)))
+        editor.applyAvatar(jpeg: avatar)
+        editor.applyBanner(jpeg: banner)
+        XCTAssertTrue(editor.hasAvatar && editor.hasBanner)
+        XCTAssertTrue(editor.save())
+        XCTAssertEqual(me.avatarData, avatar)
+        XCTAssertEqual(me.bannerData, banner)
+    }
+
+    func testLikesText() {
+        XCTAssertEqual(likesText(0), "0 likes")
+        XCTAssertEqual(likesText(1), "1 like")
+        XCTAssertEqual(likesText(7), "7 likes")
     }
 }

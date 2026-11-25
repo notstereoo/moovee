@@ -162,6 +162,7 @@ struct FeedView: View {
                     emptyMessage: "The catalog returned no movies. Pull down to refresh."
                 )
                 .navigationTitle("Feed")
+                .softTopEdge()
                 .appDestinations()
                 .task { if model.phase == .loading { await model.loadFirst() } }
             }
@@ -191,6 +192,7 @@ struct SearchView: View {
                 }
             }
             .navigationTitle("Search")
+            .softTopEdge()
             .searchable(text: $query, prompt: "Movie title")
             .appDestinations()
             .task(id: trimmed) {

@@ -54,6 +54,17 @@ final class ProfileEditorViewModel {
         return true
     }
 
+    /// Уже кадрированный пользователем JPEG.
+    func applyAvatar(jpeg: Data) {
+        avatarPreview = jpeg
+        avatarChange = .set(jpeg)
+    }
+
+    func applyBanner(jpeg: Data) {
+        bannerPreview = jpeg
+        bannerChange = .set(jpeg)
+    }
+
     func removeAvatar() {
         avatarPreview = nil
         avatarChange = .remove

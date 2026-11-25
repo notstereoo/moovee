@@ -37,6 +37,7 @@ private struct CollectionsContent: View {
                 }
             }
             .navigationTitle("Collections")
+            .softTopEdge()
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("New collection", systemImage: "plus") { showEditor = true }

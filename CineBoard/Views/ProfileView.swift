@@ -29,7 +29,7 @@ private struct ProfileContent: View {
     @State private var confirmLogout = false
 
     private var user: UserAccount { model.user }
-    private let bannerHeight: CGFloat = 190
+    private let bannerHeight: CGFloat = 200
     private let avatarSize: CGFloat = 88
 
     var body: some View {
@@ -48,7 +48,7 @@ private struct ProfileContent: View {
                     header
                     bio
                     statsRow
-                    actionButton
+                    followButton
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -67,6 +67,7 @@ private struct ProfileContent: View {
                 .padding(16)
             }
         }
+        .coordinateSpace(name: ProfileBanner.scrollSpace)
         .ignoresSafeArea(edges: .top)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
@@ -100,26 +101,35 @@ private struct ProfileContent: View {
     // MARK: Шапка
 
     private var banner: some View {
-        ProfileBanner(imageData: user.bannerData, seed: user.username, height: bannerHeight)
+        ProfileBanner(imageData: user.bannerData, seed: user.username, height: bannerHeight, stretches: true)
     }
 
+    /// Слева аватар (наполовину на баннере) и под ним @никнейм; справа имя, выровненное по нижней половине аватара.
     private var header: some View {
         HStack(alignment: .top, spacing: 14) {
-            AvatarView(user: user, size: avatarSize)
-                .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 4))
-                .padding(.top, -avatarSize / 2)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(user.shownName).font(.title2.bold()).lineLimit(2)
-                Text("@\(user.username)").font(.subheadline).foregroundStyle(.secondary.opacity(0.8))
+            VStack(alignment: .leading, spacing: 6) {
+                AvatarView(user: user, size: avatarSize)
+                    .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 4))
+                    .padding(.top, -avatarSize / 2)
+                Text("@\(user.username)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary.opacity(0.85))
+                    .lineLimit(1)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(user.shownName)
+                    .font(.title2.bold())
+                    .lineLimit(2)
+                    .frame(minHeight: avatarSize / 2, alignment: .center)
                 if user.isDemo || model.isFriend {
                     HStack(spacing: 6) {
                         if user.isDemo { badge("Demo profile", systemImage: "sparkles") }
                         if model.isFriend { badge("Friends", systemImage: "person.2.fill") }
                     }
-                    .padding(.top, 4)
                 }
             }
-            .padding(.top, 6)
             Spacer(minLength: 0)
         }
     }
@@ -171,18 +181,10 @@ private struct ProfileContent: View {
             .accessibilityElement(children: .combine)
     }
 
+    /// Редактирование своего профиля — только через меню справа сверху; здесь лишь подписка на чужой профиль.
     @ViewBuilder
-    private var actionButton: some View {
-        if model.isMe {
-            Button {
-                showEditProfile = true
-            } label: {
-                Text("Edit profile").font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-            .controlSize(.large)
-        } else if model.canFollow {
+    private var followButton: some View {
+        if !model.isMe && model.canFollow {
             Button {
                 model.toggleFollow()
             } label: {
@@ -271,7 +273,7 @@ private struct ProfileContent: View {
 
     private var collectionsSection: some View {
         let list = model.collections
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 18) {
             Text(model.isMe ? "My collections" : "Collections").font(.headline)
             if list.isEmpty {
                 Text(
@@ -281,9 +283,11 @@ private struct ProfileContent: View {
                 )
                 .foregroundStyle(.secondary).font(.subheadline)
             } else {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 16) {
-                    ForEach(list) { c in
-                        NavigationLink(value: c) { CollectionCard(collection: c) }.buttonStyle(.plain)
+                // По одной подборке в строке; обложка слева, затем справа, и так по очереди.
+                VStack(spacing: 30) {
+                    ForEach(Array(list.enumerated()), id: \.element.id) { index, c in
+                        CollectionShowcaseRow(
+                            collection: c, likes: model.likeCount(of: c), mirrored: index % 2 == 1)
                     }
                 }
             }

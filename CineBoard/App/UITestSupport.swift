@@ -72,7 +72,10 @@
                     voteAverage: nil, runtime: nil, genres: nil)
             }
             let neon = try deps.collections.create(
-                title: "Late night neon", details: "Rain, synths and glowing signs.", isPublic: true, as: me)
+                title: "Late night neon",
+                details:
+                    "Rain, synths and glowing signs. A long, slow walk through neon-lit streets after midnight: lonely androids, quiet drives, city lights reflected in puddles, and soundtracks that stay with you for weeks after the credits roll.",
+                isPublic: true, as: me)
             for m in [movie(335984, "Blade Runner 2049", "2017"), movie(64690, "Drive", "2011"), movie(152601, "Her", "2013")] {
                 try deps.collections.add(m, to: neon, as: me)
             }
@@ -121,6 +124,36 @@
                     gradient, start: .zero, end: CGPoint(x: size.width, y: size.height), options: [])
                 UIColor.white.withAlphaComponent(0.18).setFill()
                 cg.fillEllipse(in: CGRect(x: size.width * 0.55, y: -size.height * 0.3, width: size.height * 1.2, height: size.height * 1.2))
+            }
+        }
+    }
+
+    /// Режим `-preview-crop-avatar` / `-preview-crop-banner`: сразу показывает экран кадрирования на тестовой картинке.
+    enum CropPreviewSupport {
+        static var kind: CropRequest.Kind? {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("-preview-crop-avatar") { return .avatar }
+            if args.contains("-preview-crop-banner") { return .banner }
+            return nil
+        }
+
+        static func sampleImage() -> UIImage {
+            let size = CGSize(width: 1600, height: 1000)
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1
+            return UIGraphicsImageRenderer(size: size, format: format).image { ctx in
+                let cg = ctx.cgContext
+                let colors = [UIColor.systemTeal, UIColor.systemIndigo, UIColor.systemPink, UIColor.systemOrange]
+                for (i, color) in colors.enumerated() {
+                    color.setFill()
+                    cg.fill(CGRect(x: size.width / 4 * CGFloat(i), y: 0, width: size.width / 4, height: size.height))
+                }
+                UIColor.white.setFill()
+                cg.fillEllipse(in: CGRect(x: 560, y: 220, width: 480, height: 480))
+                UIColor.black.setFill()
+                cg.fillEllipse(in: CGRect(x: 650, y: 360, width: 90, height: 90))
+                cg.fillEllipse(in: CGRect(x: 860, y: 360, width: 90, height: 90))
+                cg.fill(CGRect(x: 690, y: 560, width: 220, height: 30))
             }
         }
     }

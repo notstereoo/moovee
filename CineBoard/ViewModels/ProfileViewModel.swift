@@ -84,6 +84,11 @@ final class ProfileViewModel {
         return social.totalLikes(ofOwner: user)
     }
 
+    func likeCount(of collection: MovieCollection) -> Int {
+        _ = social.revision
+        return social.likeCount(of: collection)
+    }
+
     var canFollow: Bool { !isMe && session.currentUser != nil }
 
     var isFollowing: Bool {

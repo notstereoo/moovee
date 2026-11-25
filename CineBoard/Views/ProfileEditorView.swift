@@ -13,8 +13,9 @@ private struct ProfileEditorContent: View {
     @Environment(\.dismiss) private var dismiss
     @State private var avatarItem: PhotosPickerItem?
     @State private var bannerItem: PhotosPickerItem?
+    @State private var cropRequest: CropRequest?
 
-    private let bannerHeight: CGFloat = 130
+    private let bannerHeight: CGFloat = 170
     private let avatarSize: CGFloat = 84
 
     var body: some View {
@@ -68,16 +69,37 @@ private struct ProfileEditorContent: View {
                     Button("Save") { if model.save() { dismiss() } }.disabled(!model.canSave)
                 }
             }
-            .onChange(of: avatarItem) { _, item in load(item) { model.setAvatar(from: $0) } }
-            .onChange(of: bannerItem) { _, item in load(item) { model.setBanner(from: $0) } }
+            .onChange(of: avatarItem) { _, item in pick(item, kind: .avatar) }
+            .onChange(of: bannerItem) { _, item in pick(item, kind: .banner) }
+            .fullScreenCover(item: $cropRequest) { request in
+                ImageCropView(
+                    request: request,
+                    onCancel: { cropRequest = nil },
+                    onDone: { jpeg in
+                        switch request.kind {
+                        case .avatar: model.applyAvatar(jpeg: jpeg)
+                        case .banner: model.applyBanner(jpeg: jpeg)
+                        }
+                        cropRequest = nil
+                    })
+            }
             .errorAlert($model.errorMessage)
         }
     }
 
-    private func load(_ item: PhotosPickerItem?, apply: @escaping (Data) -> Void) {
+    /// Загружает выбранное фото и открывает экран выбора области.
+    private func pick(_ item: PhotosPickerItem?, kind: CropRequest.Kind) {
         guard let item else { return }
         Task {
-            if let data = try? await item.loadTransferable(type: Data.self) { apply(data) }
+            defer {
+                avatarItem = nil
+                bannerItem = nil
+            }
+            guard let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else {
+                model.errorMessage = String(localized: "Could not read this image.")
+                return
+            }
+            cropRequest = CropRequest(kind: kind, image: ImageProcessing.normalized(image))
         }
     }
 

@@ -197,15 +197,35 @@ enum ProfileRoute: Hashable {
 }
 
 /// Баннер профиля. Картинка лежит поверх прозрачной подложки, поэтому не раздувает раскладку.
+/// С `stretches` при оттягивании списка вниз баннер приближается (как в X), а не уезжает вниз.
 struct ProfileBanner: View {
     let imageData: Data?
     let seed: String
-    var height: CGFloat = 190
+    var height: CGFloat = 200
+    var stretches = false
+    static let scrollSpace = "profileScroll"
 
     var body: some View {
-        Color.clear
+        if stretches {
+            GeometryReader { geo in
+                let pulled = max(0, geo.frame(in: .named(Self.scrollSpace)).minY)
+                artwork
+                    .frame(width: geo.size.width, height: height + pulled)
+                    .clipped()
+                    .offset(y: -pulled)
+            }
             .frame(height: height)
-            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
+        } else {
+            artwork
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var artwork: some View {
+        Color.clear
             .overlay {
                 if let imageData, let image = UIImage(data: imageData) {
                     Image(uiImage: image).resizable().scaledToFill()
@@ -218,6 +238,47 @@ struct ProfileBanner: View {
                 }
             }
             .clipped()
-            .accessibilityHidden(true)
     }
+}
+
+func likesText(_ n: Int) -> String { n == 1 ? "1 like" : "\(n) likes" }
+
+/// Мягкий верх экрана: вместо резкой границы под заголовком контент плавно уходит в размытие.
+struct SoftTopEdge: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .mask(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .black, location: 0),
+                                .init(color: .black.opacity(0.7), location: 0.35),
+                                .init(color: .black.opacity(0.25), location: 0.7),
+                                .init(color: .clear, location: 1),
+                            ], startPoint: .top, endPoint: .bottom)
+                    )
+                    .frame(height: 150)
+                    .ignoresSafeArea(edges: .top)
+                    .allowsHitTesting(false)
+            }
+            .modifier(NativeSoftScrollEdge())
+    }
+}
+
+/// На iOS 26+ системный край прокрутки тоже делаем мягким.
+private struct NativeSoftScrollEdge: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectStyle(.soft, for: .top)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func softTopEdge() -> some View { modifier(SoftTopEdge()) }
 }

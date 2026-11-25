@@ -33,9 +33,23 @@ struct CineBoardApp: App {
         }
     }
 
+    @ViewBuilder
+    private var rootContent: some View {
+        #if DEBUG
+            if let kind = CropPreviewSupport.kind {
+                ImageCropView(
+                    request: CropRequest(kind: kind, image: CropPreviewSupport.sampleImage()), onCancel: {}, onDone: { _ in })
+            } else {
+                RootView()
+            }
+        #else
+            RootView()
+        #endif
+    }
+
     var body: some Scene {
         WindowGroup {
-            RootView()
+            rootContent
                 .environment(dependencies)
                 .environment(dependencies.session)
                 .environment(\.catalog, dependencies.catalog)
