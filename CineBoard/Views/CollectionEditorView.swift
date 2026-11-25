@@ -19,22 +19,22 @@ private struct CollectionEditorContent: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Название") { TextField("Например, «Фильмы на дождливый вечер»", text: $model.title) }
-                Section("Описание") {
-                    TextField("О чём эта подборка", text: $model.details, axis: .vertical).lineLimit(3...6)
+                Section("Title") { TextField("e.g. \"Movies for a rainy evening\"", text: $model.title) }
+                Section("Description") {
+                    TextField("What is this collection about", text: $model.details, axis: .vertical).lineLimit(3...6)
                 }
                 Section {
-                    Toggle("Публичная подборка", isOn: $model.isPublic)
+                    Toggle("Public collection", isOn: $model.isPublic)
                 } footer: {
-                    Text(model.isPublic ? "Её увидят другие пользователи в вашем профиле." : "Видна только вам.")
+                    Text(model.isPublic ? "Other users will see it on your profile." : "Visible only to you.")
                 }
             }
-            .navigationTitle(model.collection == nil ? "Новая подборка" : "Редактирование")
+            .navigationTitle(model.collection == nil ? "New collection" : "Editing")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Сохранить") {
+                    Button("Save") {
                         if let saved = model.save() {
                             onSaved?(saved)
                             dismiss()

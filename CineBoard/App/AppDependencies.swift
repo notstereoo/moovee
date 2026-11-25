@@ -9,16 +9,18 @@ final class AppDependencies {
     let collections: any CollectionRepository
     let reviews: any ReviewRepository
     let favorites: any FavoritesRepository
+    let social: any SocialRepository
     let catalog: any MovieCatalog
 
     init(
         session: AppSession, collections: any CollectionRepository, reviews: any ReviewRepository,
-        favorites: any FavoritesRepository, catalog: any MovieCatalog
+        favorites: any FavoritesRepository, social: any SocialRepository, catalog: any MovieCatalog
     ) {
         self.session = session
         self.collections = collections
         self.reviews = reviews
         self.favorites = favorites
+        self.social = social
         self.catalog = catalog
     }
 
@@ -34,6 +36,7 @@ final class AppDependencies {
             collections: LocalCollectionRepository(context: context),
             reviews: LocalReviewRepository(context: context),
             favorites: LocalFavoritesRepository(context: context),
+            social: LocalSocialRepository(context: context),
             catalog: catalog)
     }
 
@@ -52,7 +55,7 @@ final class AppDependencies {
     }
 
     func makeCollectionDetailViewModel(_ collection: MovieCollection) -> CollectionDetailViewModel {
-        CollectionDetailViewModel(collection: collection, repository: collections, session: session)
+        CollectionDetailViewModel(collection: collection, repository: collections, social: social, session: session)
     }
 
     func makeSaveViewModel(movie: Movie) -> SaveToCollectionViewModel {
@@ -69,7 +72,15 @@ final class AppDependencies {
     }
 
     func makeProfileViewModel(user: UserAccount) -> ProfileViewModel {
-        ProfileViewModel(user: user, collections: collections, reviews: reviews, favorites: favorites, session: session)
+        ProfileViewModel(
+            user: user, collections: collections, reviews: reviews, favorites: favorites, social: social,
+            session: session)
+    }
+
+    func makeProfileEditorViewModel() -> ProfileEditorViewModel { ProfileEditorViewModel(session: session) }
+
+    func makeFollowListViewModel(user: UserAccount, kind: FollowListViewModel.Kind) -> FollowListViewModel {
+        FollowListViewModel(user: user, kind: kind, social: social)
     }
 
     func makeEditorViewModel(collection: MovieCollection?) -> CollectionEditorViewModel {

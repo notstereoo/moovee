@@ -8,6 +8,7 @@ protocol AuthProvider {
     func user(id: UUID) -> UserAccount?
     func updateBio(_ bio: String, for user: UserAccount) throws
     func setProfilePrivate(_ isPrivate: Bool, for user: UserAccount) throws
+    func updateProfile(_ edit: ProfileEdit, for user: UserAccount) throws
     /// Удаляет аккаунт и все его данные; требует пароль.
     func deleteAccount(_ user: UserAccount, password: String) throws
 }
@@ -72,4 +73,54 @@ protocol FavoritesRepository: AnyObject {
     func add(_ movie: Movie, as user: UserAccount) throws
     func remove(movieID: Int, as user: UserAccount) throws
     func move(from source: IndexSet, to destination: Int, as user: UserAccount) throws
+}
+
+enum ProfileRules {
+    static let maxNameLength = 40
+    static let maxBioLength = 160
+}
+
+enum ImageChange: Equatable {
+    case keep
+    case remove
+    case set(Data)
+}
+
+/// Все редактируемые поля профиля одним пакетом.
+struct ProfileEdit {
+    var displayName: String
+    var bio: String
+    var isPrivate: Bool
+    var avatar: ImageChange = .keep
+    var banner: ImageChange = .keep
+}
+
+/// Подписки, лайки и сохранения подборок.
+@MainActor
+protocol SocialRepository: AnyObject {
+    var revision: Int { get }
+
+    // Подписки
+    func isFollowing(_ follower: UserAccount, _ followee: UserAccount) -> Bool
+    /// Друзья — взаимные подписки.
+    func areFriends(_ a: UserAccount, _ b: UserAccount) -> Bool
+    func followersCount(of user: UserAccount) -> Int
+    func followingCount(of user: UserAccount) -> Int
+    func followers(of user: UserAccount) -> [UserAccount]
+    func following(of user: UserAccount) -> [UserAccount]
+    func follow(_ followee: UserAccount, as user: UserAccount) throws
+    func unfollow(_ followee: UserAccount, as user: UserAccount) throws
+
+    // Лайки подборок
+    func likeCount(of collection: MovieCollection) -> Int
+    /// Сумма лайков всех подборок пользователя.
+    func totalLikes(ofOwner user: UserAccount) -> Int
+    func isLiked(_ collection: MovieCollection, by user: UserAccount) -> Bool
+    func setLiked(_ liked: Bool, _ collection: MovieCollection, as user: UserAccount) throws
+
+    // Сохранённые подборки
+    func isSaved(_ collection: MovieCollection, by user: UserAccount) -> Bool
+    func setSaved(_ saved: Bool, _ collection: MovieCollection, as user: UserAccount) throws
+    /// Сохранённые подборки, которые пользователю по-прежнему разрешено видеть; новые сверху.
+    func savedCollections(of user: UserAccount) -> [MovieCollection]
 }

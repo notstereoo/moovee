@@ -9,15 +9,15 @@ enum AuthError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .invalidUsername: String(localized: "Имя пользователя: 3–20 символов, латинские буквы, цифры и «_».")
-        case .weakPassword: String(localized: "Пароль должен содержать не менее 8 символов.")
-        case .usernameTaken: String(localized: "Это имя уже занято. Выберите другое.")
-        case .invalidCredentials: String(localized: "Неверное имя пользователя или пароль.")
-        case .storage: String(localized: "Не удалось сохранить данные на устройстве. Повторите попытку.")
+        case .invalidUsername: String(localized: "Username: 3–20 characters, Latin letters, digits and \"_\".")
+        case .weakPassword: String(localized: "Password must be at least 8 characters.")
+        case .usernameTaken: String(localized: "This username is taken. Choose another one.")
+        case .invalidCredentials: String(localized: "Wrong username or password.")
+        case .storage: String(localized: "Could not save data on this device. Please try again.")
         case .tooManyAttempts(let seconds):
             seconds >= 60
-                ? String(localized: "Слишком много попыток. Повторите через \((seconds + 59) / 60) мин.")
-                : String(localized: "Слишком много попыток. Повторите через \(seconds) с.")
+                ? String(localized: "Too many attempts. Try again in \((seconds + 59) / 60) min.")
+                : String(localized: "Too many attempts. Try again in \(seconds) s.")
         }
     }
 }
@@ -144,6 +144,24 @@ struct LocalAuthProvider: AuthProvider {
         try save()
     }
 
+    func updateProfile(_ edit: ProfileEdit, for user: UserAccount) throws {
+        user.displayName = String(
+            edit.displayName.trimmingCharacters(in: .whitespacesAndNewlines).prefix(ProfileRules.maxNameLength))
+        user.bio = String(edit.bio.trimmingCharacters(in: .whitespacesAndNewlines).prefix(ProfileRules.maxBioLength))
+        user.isProfilePrivate = edit.isPrivate
+        switch edit.avatar {
+        case .keep: break
+        case .remove: user.avatarData = nil
+        case .set(let data): user.avatarData = data
+        }
+        switch edit.banner {
+        case .keep: break
+        case .remove: user.bannerData = nil
+        case .set(let data): user.bannerData = data
+        }
+        try save()
+    }
+
     /// Удаляет аккаунт и все его данные (подборки, отзывы, любимые) после подтверждения паролем.
     func deleteAccount(_ user: UserAccount, password: String) throws {
         let name = user.username
@@ -153,6 +171,7 @@ struct LocalAuthProvider: AuthProvider {
             throw AuthError.invalidCredentials
         }
         let id = user.id
+        SocialCleanup.removeData(of: user, in: context)
         context.delete(user)
         do { try context.save() } catch {
             context.rollback()
@@ -243,6 +262,11 @@ final class AppSession {
     func setProfilePrivate(_ isPrivate: Bool) throws {
         guard let user = currentUser else { return }
         try auth.setProfilePrivate(isPrivate, for: user)
+    }
+
+    func updateProfile(_ edit: ProfileEdit) throws {
+        guard let user = currentUser else { return }
+        try auth.updateProfile(edit, for: user)
     }
 
     /// Необратимо удаляет аккаунт и все данные пользователя, затем выходит.

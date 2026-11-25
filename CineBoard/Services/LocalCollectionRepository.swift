@@ -6,9 +6,9 @@ enum CollectionError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .notOwner: String(localized: "Редактировать можно только свои подборки.")
-        case .emptyTitle: String(localized: "Введите название подборки.")
-        case .saveFailed: String(localized: "Не удалось сохранить изменения. Повторите попытку.")
+        case .notOwner: String(localized: "You can only edit your own collections.")
+        case .emptyTitle: String(localized: "Enter a collection title.")
+        case .saveFailed: String(localized: "Could not save changes. Please try again.")
         }
     }
 }
@@ -64,6 +64,7 @@ final class LocalCollectionRepository: CollectionRepository {
 
     func delete(_ c: MovieCollection, as user: UserAccount) throws {
         try authorize(c, user)
+        SocialCleanup.removeData(ofCollection: c.id, in: context)
         context.delete(c)
         try commit()
     }

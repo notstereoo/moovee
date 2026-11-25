@@ -5,20 +5,7 @@ func userMessage(for error: Error) -> String {
     return error.localizedDescription
 }
 
-func filmsText(_ n: Int) -> String {
-    let m10 = n % 10, m100 = n % 100
-    let word: String
-    if (11...14).contains(m100) {
-        word = "фильмов"
-    } else if m10 == 1 {
-        word = "фильм"
-    } else if (2...4).contains(m10) {
-        word = "фильма"
-    } else {
-        word = "фильмов"
-    }
-    return "\(n) \(word)"
-}
+func filmsText(_ n: Int) -> String { n == 1 ? "1 film" : "\(n) films" }
 
 // MARK: - Каталог в Environment
 
@@ -35,7 +22,7 @@ extension EnvironmentValues {
 extension View {
     func errorAlert(_ message: Binding<String?>) -> some View {
         alert(
-            "Ошибка",
+            "Error",
             isPresented: Binding(
                 get: { message.wrappedValue != nil },
                 set: { if !$0 { message.wrappedValue = nil } })
@@ -51,6 +38,12 @@ extension View {
         navigationDestination(for: Movie.self) { MovieDetailView(movie: $0) }
             .navigationDestination(for: MovieCollection.self) { CollectionDetailView(collection: $0) }
             .navigationDestination(for: UserAccount.self) { ProfileView(user: $0) }
+            .navigationDestination(for: ProfileRoute.self) { route in
+                switch route {
+                case .favorites(let user): FavoritesView(user: user)
+                case .followList(let user, let kind): FollowListView(user: user, kind: kind)
+                }
+            }
     }
 }
 
@@ -80,7 +73,7 @@ struct PosterImage: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Постер: \(title)")
+            .accessibilityLabel("Poster: \(title)")
     }
 
     private var placeholder: some View {
@@ -94,22 +87,47 @@ struct PosterImage: View {
 
 struct AvatarView: View {
     let name: String
+    var imageData: Data?
     var size: CGFloat = 44
 
-    private var hue: Double {
-        Double(name.unicodeScalars.reduce(0) { ($0 + Int($1.value)) % 360 }) / 360
+    init(name: String, imageData: Data? = nil, size: CGFloat = 44) {
+        self.name = name
+        self.imageData = imageData
+        self.size = size
+    }
+
+    init(user: UserAccount, size: CGFloat = 44) {
+        self.init(name: user.shownName, imageData: user.avatarData, size: size)
     }
 
     var body: some View {
-        Circle()
-            .fill(Color(hue: hue, saturation: 0.45, brightness: 0.75))
-            .frame(width: size, height: size)
-            .overlay(
-                Text(String(name.prefix(1)).uppercased())
-                    .font(.system(size: size * 0.45, weight: .semibold))
-                    .foregroundStyle(.white)
-            )
-            .accessibilityHidden(true)
+        Group {
+            if let imageData, let image = UIImage(data: imageData) {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                Circle()
+                    .fill(ProfileColors.color(for: name))
+                    .overlay(
+                        Text(String(name.prefix(1)).uppercased())
+                            .font(.system(size: size * 0.45, weight: .semibold))
+                            .foregroundStyle(.white)
+                    )
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .accessibilityHidden(true)
+    }
+}
+
+/// Цвета-заглушки для профиля без фото: стабильно зависят от имени.
+enum ProfileColors {
+    static func hue(for name: String) -> Double {
+        Double(name.unicodeScalars.reduce(0) { ($0 + Int($1.value)) % 360 }) / 360
+    }
+
+    static func color(for name: String, brightness: Double = 0.75, shift: Double = 0) -> Color {
+        Color(hue: (hue(for: name) + shift).truncatingRemainder(dividingBy: 1), saturation: 0.45, brightness: brightness)
     }
 }
 
@@ -137,7 +155,7 @@ struct SkeletonGrid: View {
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { dim = true }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Загрузка")
+        .accessibilityLabel("Loading")
     }
 }
 
@@ -147,11 +165,11 @@ struct ErrorStateView: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("Не удалось загрузить", systemImage: "wifi.exclamationmark")
+            Label("Could not load", systemImage: "wifi.exclamationmark")
         } description: {
             Text(message)
         } actions: {
-            Button("Повторить", action: retry).buttonStyle(.borderedProminent)
+            Button("Retry", action: retry).buttonStyle(.borderedProminent)
         }
     }
 }
@@ -160,7 +178,7 @@ struct TMDBAttribution: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(
-                "Данные о фильмах предоставлены TMDB. Приложение использует API TMDB, но не одобрено и не сертифицировано TMDB."
+                "Movie data provided by TMDB. This app uses the TMDB API but is not endorsed or certified by TMDB."
             )
             .font(.caption2)
             .multilineTextAlignment(.center)
@@ -169,5 +187,37 @@ struct TMDBAttribution: View {
                 .font(.caption2)
         }
         .padding()
+    }
+}
+
+/// Экраны, открываемые из профиля.
+enum ProfileRoute: Hashable {
+    case favorites(UserAccount)
+    case followList(UserAccount, FollowListViewModel.Kind)
+}
+
+/// Баннер профиля. Картинка лежит поверх прозрачной подложки, поэтому не раздувает раскладку.
+struct ProfileBanner: View {
+    let imageData: Data?
+    let seed: String
+    var height: CGFloat = 190
+
+    var body: some View {
+        Color.clear
+            .frame(height: height)
+            .frame(maxWidth: .infinity)
+            .overlay {
+                if let imageData, let image = UIImage(data: imageData) {
+                    Image(uiImage: image).resizable().scaledToFill()
+                } else {
+                    LinearGradient(
+                        colors: [
+                            ProfileColors.color(for: seed, brightness: 0.55),
+                            ProfileColors.color(for: seed, brightness: 0.35, shift: 0.08),
+                        ], startPoint: .topLeading, endPoint: .bottomTrailing)
+                }
+            }
+            .clipped()
+            .accessibilityHidden(true)
     }
 }

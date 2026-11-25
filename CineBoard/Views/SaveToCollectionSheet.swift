@@ -20,11 +20,11 @@ private struct SaveToCollectionContent: View {
                 let mine = model.mine
                 if mine.isEmpty {
                     ContentUnavailableView {
-                        Label("Пока нет подборок", systemImage: "rectangle.stack.badge.plus")
+                        Label("No collections yet", systemImage: "rectangle.stack.badge.plus")
                     } description: {
-                        Text("Создайте первую подборку — и фильм сразу попадёт в неё.")
+                        Text("Create your first collection — the movie will go straight into it.")
                     } actions: {
-                        Button("Создать подборку") { showNew = true }.buttonStyle(.borderedProminent)
+                        Button("Create collection") { showNew = true }.buttonStyle(.borderedProminent)
                     }
                 } else {
                     List(mine) { c in
@@ -35,7 +35,7 @@ private struct SaveToCollectionContent: View {
                                 PosterImage(path: c.coverPath, title: c.title, size: .w185, ratio: 1.0).frame(width: 48)
                                 VStack(alignment: .leading) {
                                     Text(c.title).foregroundStyle(.primary)
-                                    Text("\(filmsText(c.items.count)) · \(c.isPublic ? "публичная" : "приватная")")
+                                    Text("\(filmsText(c.items.count)) · \(c.isPublic ? "public" : "private")")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
@@ -43,16 +43,16 @@ private struct SaveToCollectionContent: View {
                                     .foregroundStyle(model.contains(c) ? Color.accentColor : .secondary)
                             }
                         }
-                        .accessibilityValue(model.contains(c) ? "Добавлен" : "Не добавлен")
+                        .accessibilityValue(model.contains(c) ? "Added" : "Not added")
                     }
                 }
             }
-            .navigationTitle("Сохранить в подборку")
+            .navigationTitle("Save to collection")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
                 ToolbarItem(placement: .secondaryAction) {
-                    Button("Новая подборка", systemImage: "plus") { showNew = true }
+                    Button("New collection", systemImage: "plus") { showNew = true }
                 }
             }
             .sheet(isPresented: $showNew) {

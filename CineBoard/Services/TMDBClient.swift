@@ -12,12 +12,12 @@ enum TMDBError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .missingKey: String(localized: "Не задан ключ TMDB. Добавьте его в Config/Secrets.xcconfig (см. README).")
-        case .invalidKey: String(localized: "Ключ TMDB не принят. Проверьте значение в Config/Secrets.xcconfig.")
-        case .offline: String(localized: "Нет соединения с интернетом. Проверьте сеть и повторите.")
-        case .rateLimited: String(localized: "Каталог временно ограничил запросы. Подождите немного и повторите.")
-        case .server(let code): String(localized: "Каталог временно недоступен (код \(code)). Повторите позже.")
-        case .badResponse, .decoding: String(localized: "Не удалось разобрать ответ каталога. Повторите позже.")
+        case .missingKey: String(localized: "TMDB key is not set. Add it to Config/Secrets.xcconfig (see README).")
+        case .invalidKey: String(localized: "The TMDB key was rejected. Check the value in Config/Secrets.xcconfig.")
+        case .offline: String(localized: "No internet connection. Check your network and try again.")
+        case .rateLimited: String(localized: "The catalog has temporarily limited requests. Wait a moment and try again.")
+        case .server(let code): String(localized: "The catalog is temporarily unavailable (code \(code)). Please try later.")
+        case .badResponse, .decoding: String(localized: "Could not read the catalog response. Please try later.")
         }
     }
 }
@@ -81,7 +81,7 @@ struct TMDBClient: MovieCatalog {
         guard var comps = URLComponents(string: "https://api.themoviedb.org/3\(path)") else {
             throw TMDBError.badResponse
         }
-        var query = items + [URLQueryItem(name: "language", value: "ru-RU")]
+        var query = items + [URLQueryItem(name: "language", value: "en-US")]
         let useBearer = apiKey.hasPrefix("eyJ")  // v4 Read Access Token — JWT
         if !useBearer { query.append(URLQueryItem(name: "api_key", value: apiKey)) }
         comps.queryItems = query

@@ -61,7 +61,7 @@ struct MovieMasonry: View {
                             .background(.ultraThinMaterial, in: Circle())
                     }
                     .padding(8)
-                    .accessibilityLabel("Сохранить «\(movie.title)» в подборку")
+                    .accessibilityLabel("Save \"\(movie.title)\" to a collection")
                 }
             }
             NavigationLink(value: movie) {
@@ -95,7 +95,7 @@ struct MovieMasonry: View {
 
 struct OfflineBanner: View {
     var body: some View {
-        Label("Нет связи с каталогом. Показаны сохранённые данные.", systemImage: "icloud.slash")
+        Label("No connection to the catalog. Showing saved data.", systemImage: "icloud.slash")
             .font(.footnote)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -142,7 +142,7 @@ struct MovieListContent: View {
         if model.isLoadingMore {
             ProgressView().padding()
         } else if model.loadMoreFailed {
-            Button("Не удалось загрузить ещё. Повторить") {
+            Button("Could not load more. Retry") {
                 if let last = model.movies.last { Task { await model.loadMoreIfNeeded(current: last) } }
             }
             .padding()
@@ -158,10 +158,10 @@ struct FeedView: View {
         ViewModelHost(make: { $0.makeFeedModel() }) { model in
             NavigationStack {
                 MovieListContent(
-                    model: model, emptyTitle: "Лента пуста",
-                    emptyMessage: "Каталог не вернул фильмов. Потяните вниз, чтобы обновить."
+                    model: model, emptyTitle: "The feed is empty",
+                    emptyMessage: "The catalog returned no movies. Pull down to refresh."
                 )
-                .navigationTitle("Лента")
+                .navigationTitle("Feed")
                 .appDestinations()
                 .task { if model.phase == .loading { await model.loadFirst() } }
             }
@@ -182,16 +182,16 @@ struct SearchView: View {
             Group {
                 if let model, !trimmed.isEmpty {
                     MovieListContent(
-                        model: model, emptyTitle: "Ничего не найдено",
-                        emptyMessage: "Попробуйте изменить запрос или проверить написание.")
+                        model: model, emptyTitle: "Nothing found",
+                        emptyMessage: "Try changing your query or check the spelling.")
                 } else {
                     ContentUnavailableView(
-                        "Поиск фильмов", systemImage: "magnifyingglass",
-                        description: Text("Введите название фильма, чтобы найти его в каталоге TMDB."))
+                        "Search movies", systemImage: "magnifyingglass",
+                        description: Text("Enter a movie title to find it in the TMDB catalog."))
                 }
             }
-            .navigationTitle("Поиск")
-            .searchable(text: $query, prompt: "Название фильма")
+            .navigationTitle("Search")
+            .searchable(text: $query, prompt: "Movie title")
             .appDestinations()
             .task(id: trimmed) {
                 let q = trimmed

@@ -8,11 +8,11 @@ enum CollectionSort: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .added: String(localized: "Сначала новые")
-        case .title: String(localized: "По названию")
-        case .year: String(localized: "По году")
-        case .rating: String(localized: "По рейтингу")
-        case .manual: String(localized: "Порядок автора")
+        case .added: String(localized: "Newest first")
+        case .title: String(localized: "By title")
+        case .year: String(localized: "By year")
+        case .rating: String(localized: "By rating")
+        case .manual: String(localized: "Author's order")
         }
     }
 

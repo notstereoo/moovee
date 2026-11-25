@@ -21,11 +21,11 @@ private struct CollectionDetailContent: View {
     var body: some View {
         switch model.availability {
         case .removed:
-            ContentUnavailableView("Подборка недоступна", systemImage: "eye.slash")
+            ContentUnavailableView("Collection unavailable", systemImage: "eye.slash")
         case .privateToViewer:
             ContentUnavailableView(
-                "Подборка недоступна", systemImage: "lock.fill",
-                description: Text("Автор сделал эту подборку приватной."))
+                "Collection unavailable", systemImage: "lock.fill",
+                description: Text("The author made this collection private."))
         case .available:
             content
         }
@@ -37,11 +37,11 @@ private struct CollectionDetailContent: View {
                 header
                 if collection.items.isEmpty {
                     ContentUnavailableView(
-                        "Здесь пока пусто", systemImage: "film.stack",
+                        "Nothing here yet", systemImage: "film.stack",
                         description: Text(
                             model.isOwner
-                                ? "Добавляйте фильмы из ленты и поиска кнопкой с закладкой."
-                                : "В этой подборке пока нет фильмов."))
+                                ? "Add movies from the feed and search with the bookmark button."
+                                : "This collection has no movies yet."))
                 } else if model.movies.isEmpty {
                     ContentUnavailableView.search(text: model.query)
                 } else {
@@ -55,35 +55,35 @@ private struct CollectionDetailContent: View {
         }
         .navigationTitle(collection.title)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $model.query, prompt: "Поиск в подборке")
+        .searchable(text: $model.query, prompt: "Search in collection")
         .toolbar {
             if !collection.items.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Picker("Сортировка", selection: $model.sort) {
+                        Picker("Sort", selection: $model.sort) {
                             ForEach(CollectionSort.allCases) { Label($0.title, systemImage: $0.systemImage).tag($0) }
                         }
                     } label: {
                         Image(systemName: "arrow.up.arrow.down.circle")
                     }
-                    .accessibilityLabel("Сортировка")
+                    .accessibilityLabel("Sort")
                     .accessibilityValue(model.sort.title)
                 }
             }
             if model.isOwner {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button("Редактировать", systemImage: "pencil") { showEdit = true }
+                        Button("Edit", systemImage: "pencil") { showEdit = true }
                         if collection.items.count > 1 {
-                            Button("Изменить порядок", systemImage: "arrow.up.and.down.text.horizontal") {
+                            Button("Reorder", systemImage: "arrow.up.and.down.text.horizontal") {
                                 showReorder = true
                             }
                         }
-                        Button("Удалить подборку", systemImage: "trash", role: .destructive) { confirmDelete = true }
+                        Button("Delete collection", systemImage: "trash", role: .destructive) { confirmDelete = true }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("Действия с подборкой")
+                    .accessibilityLabel("Collection actions")
                 }
             }
         }
@@ -91,12 +91,12 @@ private struct CollectionDetailContent: View {
         .sheet(isPresented: $showEdit) { CollectionEditorView(collection: collection) }
         .sheet(item: $movieToSave) { SaveToCollectionSheet(movie: $0) }
         .confirmationDialog(
-            "Удалить подборку «\(collection.title)»?", isPresented: $confirmDelete, titleVisibility: .visible
+            "Delete collection \"\(collection.title)\"?", isPresented: $confirmDelete, titleVisibility: .visible
         ) {
-            Button("Удалить", role: .destructive) { if model.delete() { dismiss() } }
-            Button("Отмена", role: .cancel) {}
+            Button("Delete", role: .destructive) { if model.delete() { dismiss() } }
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Фильмы из каталога не пострадают, но подборка пропадёт безвозвратно.")
+            Text("Movies in the catalog are unaffected, but the collection will be gone for good.")
         }
         .errorAlert($model.errorMessage)
     }
@@ -105,7 +105,7 @@ private struct CollectionDetailContent: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Label(
-                    collection.isPublic ? "Публичная" : "Приватная",
+                    collection.isPublic ? "Public" : "Private",
                     systemImage: collection.isPublic ? "globe" : "lock.fill")
                 Text("·")
                 Text(filmsText(collection.items.count))
@@ -117,23 +117,57 @@ private struct CollectionDetailContent: View {
             if let owner = collection.owner {
                 NavigationLink(value: owner) {
                     HStack(spacing: 8) {
-                        AvatarView(name: owner.username, size: 28)
-                        Text("@\(owner.username)").font(.subheadline.weight(.medium))
+                        AvatarView(user: owner, size: 28)
+                        Text(owner.shownName).font(.subheadline.weight(.medium))
                         Image(systemName: "chevron.right").font(.caption2).foregroundStyle(.secondary)
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Открыть профиль автора @\(owner.username)")
+                .accessibilityLabel("Open author profile \(owner.shownName)")
             }
+
+            socialRow
         }
         .padding(.horizontal)
+    }
+
+    /// Лайк и сохранение — только для чужих подборок; владелец видит число лайков.
+    @ViewBuilder
+    private var socialRow: some View {
+        if model.canInteract {
+            HStack(spacing: 10) {
+                Button {
+                    model.toggleLike()
+                } label: {
+                    Label("\(model.likeCount)", systemImage: model.isLiked ? "heart.fill" : "heart")
+                }
+                .tint(model.isLiked ? .pink : .accentColor)
+                .accessibilityLabel(model.isLiked ? "Unlike" : "Like")
+                .accessibilityValue("\(model.likeCount)")
+
+                Button {
+                    model.toggleSave()
+                } label: {
+                    Label(model.isSaved ? "Saved" : "Save", systemImage: model.isSaved ? "bookmark.fill" : "bookmark")
+                }
+                .accessibilityLabel(model.isSaved ? "Remove from saved collections" : "Save collection")
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .padding(.top, 4)
+        } else {
+            Label("\(model.likeCount)", systemImage: "heart.fill")
+                .font(.subheadline).foregroundStyle(.secondary)
+                .accessibilityLabel("Likes")
+                .accessibilityValue("\(model.likeCount)")
+        }
     }
 
     private func ownerActions(for movie: Movie) -> [CardAction] {
         guard model.isOwner else { return [] }
         return [
-            CardAction(title: "Сделать обложкой", systemImage: "photo") { model.setCover(movieID: movie.id) },
-            CardAction(title: "Убрать из подборки", systemImage: "trash", isDestructive: true) {
+            CardAction(title: "Make cover", systemImage: "photo") { model.setCover(movieID: movie.id) },
+            CardAction(title: "Remove from collection", systemImage: "trash", isDestructive: true) {
                 model.remove(movieID: movie.id)
             },
         ]
@@ -159,9 +193,9 @@ private struct ReorderItemsView: View {
                 .onMove { model.moveItems(from: $0, to: $1) }
             }
             .environment(\.editMode, .constant(.active))
-            .navigationTitle("Порядок фильмов")
+            .navigationTitle("Movie order")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }
 }

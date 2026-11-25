@@ -9,8 +9,8 @@ final class CollectionsViewModel {
 
         var title: LocalizedStringResource {
             switch self {
-            case .mine: "Мои"
-            case .discover: "Открытия"
+            case .mine: "Mine"
+            case .discover: "Discover"
             }
         }
     }

@@ -21,7 +21,7 @@ private struct MovieDetailContent: View {
                 headerBlock
                 actions
 
-                if model.isLoading && model.detail == nil { ProgressView("Загружаем подробности…").frame(maxWidth: .infinity) }
+                if model.isLoading && model.detail == nil { ProgressView("Loading details…").frame(maxWidth: .infinity) }
                 loadErrorBlock
                 overview
                 myReviewSection
@@ -51,7 +51,7 @@ private struct MovieDetailContent: View {
                     Label("TMDB \(String(format: "%.1f", r))", systemImage: "star.fill")
                         .font(.subheadline).foregroundStyle(.orange)
                 }
-                if let rt = shown.runtime, rt > 0 { Text("\(rt) мин").foregroundStyle(.secondary) }
+                if let rt = shown.runtime, rt > 0 { Text("\(rt) min").foregroundStyle(.secondary) }
                 if let g = shown.genres, !g.isEmpty {
                     Text(g.map(\.name).joined(separator: " · ")).font(.subheadline).foregroundStyle(.secondary)
                 }
@@ -64,7 +64,7 @@ private struct MovieDetailContent: View {
             Button {
                 showSave = true
             } label: {
-                Label("Сохранить в подборку", systemImage: "bookmark").frame(maxWidth: .infinity)
+                Label("Save to collection", systemImage: "bookmark").frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
 
@@ -82,7 +82,7 @@ private struct MovieDetailContent: View {
             model.toggleFavorite()
         } label: {
             Label(
-                model.isFavorite ? "В любимых" : "В любимые",
+                model.isFavorite ? "In favorites" : "Add to favorites",
                 systemImage: model.isFavorite ? "heart.fill" : "heart"
             )
             .frame(maxWidth: .infinity)
@@ -93,7 +93,7 @@ private struct MovieDetailContent: View {
         Button {
             showReviewEditor = true
         } label: {
-            Label(model.myReview == nil ? "Оценить" : "Мой отзыв", systemImage: "star.bubble")
+            Label(model.myReview == nil ? "Rate" : "My review", systemImage: "star.bubble")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
@@ -104,7 +104,7 @@ private struct MovieDetailContent: View {
         if let message = model.loadError {
             VStack(alignment: .leading, spacing: 8) {
                 Label(message, systemImage: "exclamationmark.triangle").font(.subheadline)
-                Button("Повторить") { Task { await model.load() } }
+                Button("Retry") { Task { await model.load() } }
             }
             .padding()
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
@@ -114,27 +114,27 @@ private struct MovieDetailContent: View {
     @ViewBuilder
     private var overview: some View {
         if let overview = shown.overview, !overview.isEmpty {
-            Text("Описание").font(.headline)
+            Text("Description").font(.headline)
             Text(overview)
         } else if model.detail != nil {
-            Text("Описание отсутствует.").foregroundStyle(.secondary)
+            Text("No description available.").foregroundStyle(.secondary)
         }
     }
 
     @ViewBuilder
     private var myReviewSection: some View {
         if let mine = model.myReview {
-            Text("Ваш отзыв").font(.headline)
+            Text("Your review").font(.headline)
             ReviewRow(review: mine)
         }
     }
 
     private var reviewsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Отзывы").font(.headline)
+            Text("Reviews").font(.headline)
             let others = model.otherReviews
             if others.isEmpty {
-                Text(model.myReview == nil ? "Отзывов пока нет. Будьте первым!" : "Других отзывов пока нет.")
+                Text(model.myReview == nil ? "No reviews yet. Be the first!" : "No other reviews yet.")
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(others) { ReviewRow(review: $0) }

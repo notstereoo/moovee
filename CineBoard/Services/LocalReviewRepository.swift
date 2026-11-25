@@ -6,10 +6,10 @@ enum ReviewError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .invalidRating: String(localized: "Поставьте оценку от 1 до 10.")
-        case .textTooLong: String(localized: "Отзыв слишком длинный: не более \(ReviewRules.maxTextLength) символов.")
-        case .notAuthor: String(localized: "Редактировать можно только свои отзывы.")
-        case .saveFailed: String(localized: "Не удалось сохранить отзыв. Повторите попытку.")
+        case .invalidRating: String(localized: "Give a rating from 1 to 10.")
+        case .textTooLong: String(localized: "The review is too long: at most \(ReviewRules.maxTextLength) characters.")
+        case .notAuthor: String(localized: "You can only edit your own reviews.")
+        case .saveFailed: String(localized: "Could not save the review. Please try again.")
         }
     }
 }

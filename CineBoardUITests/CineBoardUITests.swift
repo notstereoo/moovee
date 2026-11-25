@@ -13,16 +13,16 @@ final class CineBoardUITests: XCTestCase {
     // MARK: Помощники
 
     private func register(_ name: String = "ui_tester") {
-        app.segmentedControls.buttons["Регистрация"].tap()
-        let user = app.textFields["Имя пользователя"]
+        app.segmentedControls.buttons["Sign up"].tap()
+        let user = app.textFields["Username"]
         XCTAssertTrue(user.waitForExistence(timeout: 5))
         user.tap()
         user.typeText(name)
-        let password = app.secureTextFields["Пароль (от 8 символов)"]
+        let password = app.secureTextFields["Password (8+ characters)"]
         password.tap()
         password.typeText("password123")
-        app.buttons["Создать аккаунт"].tap()
-        XCTAssertTrue(app.tabBars.buttons["Лента"].waitForExistence(timeout: 10), "после регистрации должна открыться лента")
+        app.buttons["Create account"].tap()
+        XCTAssertTrue(app.tabBars.buttons["Feed"].waitForExistence(timeout: 10), "the feed should open after registration")
         dismissSavePasswordPrompt()
     }
 
@@ -45,7 +45,7 @@ final class CineBoardUITests: XCTestCase {
             if button.isSelected { return }
             Thread.sleep(forTimeInterval: 0.5)
         }
-        XCTFail("не удалось открыть вкладку «\(title)»")
+        XCTFail("could not open the tab \"\(title)\"")
     }
 
     // MARK: Сценарии
@@ -53,66 +53,69 @@ final class CineBoardUITests: XCTestCase {
     func testRegisterSearchAndSaveToNewCollection() {
         register()
 
-        tab("Поиск")
-        let search = app.searchFields["Название фильма"]
+        tab("Search")
+        let search = app.searchFields["Movie title"]
         XCTAssertTrue(search.waitForExistence(timeout: 5))
         search.tap()
-        search.typeText("Матрица")
+        search.typeText("The Matrix")
 
-        let save = app.buttons["Сохранить «Матрица» в подборку"]
-        XCTAssertTrue(save.waitForExistence(timeout: 10), "результат поиска должен появиться")
+        let save = app.buttons["Save \"The Matrix\" to a collection"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10), "the search result should appear")
         save.tap()
 
-        app.buttons["Создать подборку"].tap()
+        app.buttons["Create collection"].tap()
         let title = app.textFields.firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 5))
         title.tap()
-        title.typeText("Моя подборка")
-        app.buttons["Сохранить"].tap()
+        title.typeText("My collection")
+        app.buttons["Save"].tap()
 
-        XCTAssertTrue(app.staticTexts["Моя подборка"].waitForExistence(timeout: 5), "подборка должна появиться в списке шита")
-        app.buttons["Готово"].tap()
+        XCTAssertTrue(app.staticTexts["My collection"].waitForExistence(timeout: 5), "the collection should appear in the sheet list")
+        app.buttons["Done"].tap()
 
-        tab("Подборки")
-        XCTAssertTrue(app.staticTexts["Моя подборка"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["1 фильм"].exists)
+        tab("Collections")
+        XCTAssertTrue(app.staticTexts["My collection"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["1 film"].exists)
     }
 
     func testRateMovieShowsCommunityRatingAndProfileReview() {
         register("critic_1")
 
-        let card = app.buttons["Постер: Побег из Шоушенка"]
+        let card = app.buttons["Poster: The Shawshank Redemption"]
         XCTAssertTrue(card.waitForExistence(timeout: 10))
-        card.tap()
-
-        let rate = app.buttons["Оценить"]
-        XCTAssertTrue(rate.waitForExistence(timeout: 5))
+        let rate = app.buttons["Rate"]
+        // Нажатие сразу после системного диалога иногда теряется — повторяем.
+        for _ in 0..<3 {
+            card.tap()
+            if rate.waitForExistence(timeout: 5) { break }
+        }
+        XCTAssertTrue(rate.exists)
         rate.tap()
 
-        let picker = app.otherElements["Оценка"].firstMatch
+        let picker = app.otherElements["Rating"].firstMatch
         XCTAssertTrue(picker.waitForExistence(timeout: 5))
         picker.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.35)).tap()  // 9-я звезда
-        app.buttons["Сохранить"].tap()
+        app.buttons["Save"].tap()
 
-        let rating = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'CineBoard' AND label CONTAINS '1 оценка'"))
-        XCTAssertTrue(rating.firstMatch.waitForExistence(timeout: 5), "рейтинг сообщества должен обновиться")
-        XCTAssertTrue(app.buttons["Мой отзыв"].exists)
+        let rating = app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'CineBoard' AND label CONTAINS '1 rating'"))
+        XCTAssertTrue(rating.firstMatch.waitForExistence(timeout: 5), "the community rating should update")
+        XCTAssertTrue(app.buttons["My review"].exists)
 
         app.navigationBars.buttons.firstMatch.tap()
-        tab("Профиль")
-        XCTAssertTrue(app.staticTexts["Мои отзывы"].waitForExistence(timeout: 5))
+        tab("Profile")
+        XCTAssertTrue(app.staticTexts["My reviews"].waitForExistence(timeout: 5))
     }
 
     func testRegistrationRejectsShortPassword() {
-        app.segmentedControls.buttons["Регистрация"].tap()
-        let user = app.textFields["Имя пользователя"]
+        app.segmentedControls.buttons["Sign up"].tap()
+        let user = app.textFields["Username"]
         user.tap()
         user.typeText("short_pw")
-        let password = app.secureTextFields["Пароль (от 8 символов)"]
+        let password = app.secureTextFields["Password (8+ characters)"]
         password.tap()
         password.typeText("abc")
-        app.buttons["Создать аккаунт"].tap()
-        XCTAssertTrue(app.staticTexts["Пароль должен содержать не менее 8 символов."].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.tabBars.buttons["Лента"].exists)
+        app.buttons["Create account"].tap()
+        XCTAssertTrue(app.staticTexts["Password must be at least 8 characters."].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.tabBars.buttons["Feed"].exists)
     }
 }

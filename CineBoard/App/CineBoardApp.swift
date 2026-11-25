@@ -11,6 +11,12 @@ struct CineBoardApp: App {
         URLCache.shared = URLCache(memoryCapacity: 64 << 20, diskCapacity: 300 << 20)
         do {
             #if DEBUG
+                if PreviewSupport.isActive {
+                    let (container, deps) = try PreviewSupport.makeDependencies()
+                    self.container = container
+                    _dependencies = State(initialValue: deps)
+                    return
+                }
                 if UITestSupport.isActive {
                     let (container, deps) = try UITestSupport.makeDependencies()
                     self.container = container
@@ -23,7 +29,7 @@ struct CineBoardApp: App {
             self.container = container
             _dependencies = State(initialValue: .local(context: container.mainContext, legacyDefaults: .standard))
         } catch {
-            fatalError("Не удалось открыть локальное хранилище: \(error)")
+            fatalError("Could not open local storage: \(error)")
         }
     }
 

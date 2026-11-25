@@ -14,7 +14,7 @@ private struct CollectionsContent: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    Picker("Раздел", selection: $model.scope) {
+                    Picker("Section", selection: $model.scope) {
                         ForEach(CollectionsViewModel.Scope.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
@@ -36,10 +36,10 @@ private struct CollectionsContent: View {
                     }
                 }
             }
-            .navigationTitle("Подборки")
+            .navigationTitle("Collections")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Новая подборка", systemImage: "plus") { showEditor = true }
+                    Button("New collection", systemImage: "plus") { showEditor = true }
                 }
             }
             .sheet(isPresented: $showEditor) { CollectionEditorView() }
@@ -51,16 +51,16 @@ private struct CollectionsContent: View {
     private var emptyState: some View {
         if model.scope == .mine {
             ContentUnavailableView {
-                Label("Пока нет подборок", systemImage: "rectangle.stack.badge.plus")
+                Label("No collections yet", systemImage: "rectangle.stack.badge.plus")
             } description: {
-                Text("Создайте первую подборку и сохраняйте в неё фильмы из ленты и поиска.")
+                Text("Create your first collection and save movies to it from the feed and search.")
             } actions: {
-                Button("Создать подборку") { showEditor = true }.buttonStyle(.borderedProminent)
+                Button("Create collection") { showEditor = true }.buttonStyle(.borderedProminent)
             }
         } else {
             ContentUnavailableView(
-                "Пока нечего показать", systemImage: "globe",
-                description: Text("Публичные подборки других пользователей появятся здесь."))
+                "Nothing to show yet", systemImage: "globe",
+                description: Text("Other users' public collections will appear here."))
         }
     }
 }
@@ -76,7 +76,7 @@ struct CollectionCard: View {
             HStack(spacing: 4) {
                 if !collection.isPublic { Image(systemName: "lock.fill") }
                 Text(filmsText(collection.items.count))
-                if showOwner, let owner = collection.owner { Text("· @\(owner.username)").lineLimit(1) }
+                if showOwner, let owner = collection.owner { Text("· \(owner.shownName)").lineLimit(1) }
             }
             .font(.caption).foregroundStyle(.secondary)
         }

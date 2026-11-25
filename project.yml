@@ -1,7 +1,7 @@
 name: CineBoard
 options:
   bundleIdPrefix: com.example
-  developmentLanguage: ru
+  developmentLanguage: en
   deploymentTarget:
     iOS: "17.0"
 configFiles:

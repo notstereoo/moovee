@@ -17,13 +17,13 @@ struct RatingPicker: View {
                         .onTapGesture { rating = value }
                 }
             }
-            Text(rating == 0 ? "Выберите оценку" : "\(rating) из \(ReviewRules.ratingRange.upperBound)")
+            Text(rating == 0 ? "Choose a rating" : "\(rating) of \(ReviewRules.ratingRange.upperBound)")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(rating == 0 ? Color.secondary : .primary)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Оценка")
-        .accessibilityValue(rating == 0 ? "не выбрана" : "\(rating) из 10")
+        .accessibilityLabel("Rating")
+        .accessibilityValue(rating == 0 ? "not selected" : "\(rating) of 10")
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment: rating = min(rating + 1, ReviewRules.ratingRange.upperBound)
@@ -69,9 +69,9 @@ struct ReviewRow: View {
             } else if let author = review.author {
                 NavigationLink(value: author) {
                     HStack(spacing: 8) {
-                        AvatarView(name: author.username, size: 32)
+                        AvatarView(user: author, size: 32)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("@\(author.username)").font(.subheadline.weight(.semibold))
+                            Text(author.shownName).font(.subheadline.weight(.semibold))
                             Text(dateText).font(.caption).foregroundStyle(.secondary)
                         }
                     }
@@ -82,7 +82,7 @@ struct ReviewRow: View {
             Label("\(review.rating)", systemImage: "star.fill")
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(.orange)
-                .accessibilityLabel("Оценка \(review.rating) из 10")
+                .accessibilityLabel("Rating \(review.rating) of 10")
         }
     }
 
@@ -102,26 +102,13 @@ struct CommunityRatingLabel: View {
             )
             .font(.subheadline.weight(.medium))
         } else {
-            Label("Пока нет оценок CineBoard", systemImage: "person.2")
+            Label("No CineBoard ratings yet", systemImage: "person.2")
                 .font(.subheadline).foregroundStyle(.secondary)
         }
     }
 }
 
-func ratingsText(_ n: Int) -> String {
-    let m10 = n % 10, m100 = n % 100
-    let word: String
-    if (11...14).contains(m100) {
-        word = "оценок"
-    } else if m10 == 1 {
-        word = "оценка"
-    } else if (2...4).contains(m10) {
-        word = "оценки"
-    } else {
-        word = "оценок"
-    }
-    return "\(n) \(word)"
-}
+func ratingsText(_ n: Int) -> String { n == 1 ? "1 rating" : "\(n) ratings" }
 
 // MARK: - Редактор отзыва
 
@@ -141,33 +128,33 @@ private struct ReviewEditorContent: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Ваша оценка") { RatingPicker(rating: $model.rating) }
+                Section("Your rating") { RatingPicker(rating: $model.rating) }
                 Section {
-                    TextField("Что вы думаете о фильме? (необязательно)", text: $model.text, axis: .vertical)
+                    TextField("What do you think about the movie? (optional)", text: $model.text, axis: .vertical)
                         .lineLimit(4...10)
                 } header: {
-                    Text("Отзыв")
+                    Text("Review")
                 } footer: {
-                    Text("Осталось символов: \(model.remaining)")
+                    Text("Characters left: \(model.remaining)")
                         .foregroundStyle(model.remaining < 0 ? Color.red : .secondary)
                 }
                 if model.isEditing {
                     Section {
-                        Button("Удалить отзыв", role: .destructive) { confirmDelete = true }
+                        Button("Delete review", role: .destructive) { confirmDelete = true }
                     }
                 }
             }
             .navigationTitle(model.movie.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Сохранить") { if model.save() { dismiss() } }.disabled(!model.canSave)
+                    Button("Save") { if model.save() { dismiss() } }.disabled(!model.canSave)
                 }
             }
-            .confirmationDialog("Удалить отзыв?", isPresented: $confirmDelete, titleVisibility: .visible) {
-                Button("Удалить", role: .destructive) { if model.delete() { dismiss() } }
-                Button("Отмена", role: .cancel) {}
+            .confirmationDialog("Delete review?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Delete", role: .destructive) { if model.delete() { dismiss() } }
+                Button("Cancel", role: .cancel) {}
             }
             .errorAlert($model.errorMessage)
         }

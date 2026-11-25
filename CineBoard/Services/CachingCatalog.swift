@@ -61,16 +61,16 @@ struct CachingCatalog: MovieCatalog {
     var isConfigured: Bool { base.isConfigured }
 
     func trending(page: Int) async throws -> MoviePage {
-        try await cached("trending-\(page)", { try await base.trending(page: page) }, markCached: Self.markCached)
+        try await cached("v2-en-trending-\(page)", { try await base.trending(page: page) }, markCached: Self.markCached)
     }
 
     func search(query: String, page: Int) async throws -> MoviePage {
-        let key = "search-\(query.lowercased())-\(page)"
+        let key = "v2-en-search-\(query.lowercased())-\(page)"
         return try await cached(key, { try await base.search(query: query, page: page) }, markCached: Self.markCached)
     }
 
     func details(id: Int) async throws -> Movie {
-        try await cached("details-\(id)", { try await base.details(id: id) }, markCached: { $0 })
+        try await cached("v2-en-details-\(id)", { try await base.details(id: id) }, markCached: { $0 })
     }
 
     private static func markCached(_ page: MoviePage) -> MoviePage {

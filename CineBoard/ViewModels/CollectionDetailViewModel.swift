@@ -9,12 +9,53 @@ final class CollectionDetailViewModel {
     var query = ""
     var sort: CollectionSort = .added
     private let repository: any CollectionRepository
+    private let social: any SocialRepository
     private let session: AppSession
 
-    init(collection: MovieCollection, repository: any CollectionRepository, session: AppSession) {
+    init(
+        collection: MovieCollection, repository: any CollectionRepository, social: any SocialRepository,
+        session: AppSession
+    ) {
         self.collection = collection
         self.repository = repository
+        self.social = social
         self.session = session
+    }
+
+    // MARK: Лайки и сохранение
+
+    var likeCount: Int {
+        _ = social.revision
+        return social.likeCount(of: collection)
+    }
+
+    var isLiked: Bool {
+        _ = social.revision
+        guard let me = session.currentUser else { return false }
+        return social.isLiked(collection, by: me)
+    }
+
+    var isSaved: Bool {
+        _ = social.revision
+        guard let me = session.currentUser else { return false }
+        return social.isSaved(collection, by: me)
+    }
+
+    /// Лайкать и сохранять можно только чужие подборки.
+    var canInteract: Bool { session.currentUser != nil && !isOwner }
+
+    func toggleLike() {
+        guard let me = session.currentUser else { return }
+        do { try social.setLiked(!social.isLiked(collection, by: me), collection, as: me) } catch {
+            errorMessage = userMessage(for: error)
+        }
+    }
+
+    func toggleSave() {
+        guard let me = session.currentUser else { return }
+        do { try social.setSaved(!social.isSaved(collection, by: me), collection, as: me) } catch {
+            errorMessage = userMessage(for: error)
+        }
     }
 
     /// Защита от обращения к удалённой модели и от доступа к чужой приватной подборке.
