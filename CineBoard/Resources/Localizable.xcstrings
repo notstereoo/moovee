@@ -1,231 +1,672 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    " " : {},
-    "  %lld characters left" : {},
-    "%@ · %@" : {},
-    "%@ · %@ · %@" : {},
-    "%@'s collections" : {},
-    "%@'s favorites" : {},
-    "%@'s reviews" : {},
-    "%lld" : {},
-    "%lld characters left" : {},
-    "%lld min" : {},
-    "%lld of %lld" : {},
-    "%lld of 10" : {},
-    "@%@" : {},
-    "A few words about your taste" : {},
-    "About me" : {},
-    "Accounts are stored only on this device." : {},
-    "Add a bio in Edit profile" : {},
-    "Add movies from the feed and search with the bookmark button." : {},
-    "Add movies with the heart on a movie page" : {},
-    "Add to favorites" : {},
-    "Added" : {},
-    "Author's order" : {},
-    "Banner" : {},
-    "Banner crop area" : {},
-    "Bottom color" : {},
-    "By rating" : {},
-    "By title" : {},
-    "By year" : {},
-    "Cancel" : {},
-    "Change banner" : {},
-    "Change profile photo" : {},
-    "Characters left: %lld" : {},
-    "Choose" : {},
-    "Choose a rating" : {},
-    "CineBoard" : {},
-    "CineBoard %@ · %@" : {},
-    "Collection actions" : {},
-    "Collection unavailable" : {},
-    "Collections" : {},
-    "Color" : {},
-    "Confirm with your password" : {},
-    "Could not load" : {},
-    "Could not load more. Retry" : {},
-    "Could not read the catalog response. Please try later." : {},
-    "Could not read this image." : {},
-    "Could not save changes. Please try again." : {},
-    "Could not save data on this device. Please try again." : {},
-    "Could not save the review. Please try again." : {},
-    "Create account" : {},
-    "Create collection" : {},
-    "Create your first collection and save movies to it from the feed and search." : {},
-    "Create your first collection on the Collections tab." : {},
-    "Create your first collection — the movie will go straight into it." : {},
-    "Custom colors" : {},
-    "Delete" : {},
-    "Delete account" : {},
-    "Delete account and all data" : {},
-    "Delete account…" : {},
-    "Delete collection" : {},
-    "Delete collection \"%@\"?" : {},
-    "Delete review" : {},
-    "Delete review?" : {},
-    "Demo profile" : {},
-    "Description" : {},
-    "Discover" : {},
-    "Done" : {},
-    "Drag to reposition. Use the slider to zoom." : {},
-    "Edit" : {},
-    "Edit profile" : {},
-    "Editing" : {},
-    "Enter a collection title." : {},
-    "Enter a movie title to find it in the TMDB catalog." : {},
-    "Error" : {},
-    "Favorite movies" : {},
-    "Feed" : {},
-    "Find movies and build collections" : {},
-    "Follow" : {},
-    "Followers" : {},
-    "Following" : {},
-    "Friends" : {},
-    "Give a rating from 1 to 10." : {},
-    "Home" : {},
-    "In favorites" : {},
-    "Like" : {},
-    "Likes" : {},
-    "Loading" : {},
-    "Loading details…" : {},
-    "Log in" : {},
-    "Log out" : {},
-    "Log out of your account?" : {},
-    "Mine" : {},
-    "Mode" : {},
-    "Move and zoom — the circle is what will be visible." : {},
-    "Move and zoom — the frame is what will be visible on your profile." : {},
-    "Movie data provided by TMDB. This app uses the TMDB API but is not endorsed or certified by TMDB." : {},
-    "Movie order" : {},
-    "Movie title" : {},
-    "Movies in the catalog are unaffected, but the collection will be gone for good." : {},
-    "My collections" : {},
-    "My colors" : {},
-    "My favorites" : {},
-    "My review" : {},
-    "My reviews" : {},
-    "Name" : {},
-    "New collection" : {},
-    "Newest first" : {},
-    "No CineBoard ratings yet" : {},
-    "No collections yet" : {},
-    "No connection to the catalog. Showing saved data." : {},
-    "No description available." : {},
-    "No favorite movies yet" : {},
-    "No followers yet" : {},
-    "No internet connection. Check your network and try again." : {},
-    "No other reviews yet." : {},
-    "No reviews yet" : {},
-    "No reviews yet." : {},
-    "No reviews yet. Be the first!" : {},
-    "No saved collections" : {},
-    "Not added" : {},
-    "Not following anyone yet" : {},
-    "Nothing here yet" : {},
-    "Nothing pinned — your newest %lld collections are shown." : {},
-    "Nothing to show yet" : {},
-    "OK" : {},
-    "Open author profile %@" : {},
-    "Other collections" : {},
-    "Other users will see it on your profile." : {},
-    "Other users won't see your collections, favorite movies and review list. Reviews on movie pages remain visible to everyone." : {},
-    "Other users' public collections will appear here." : {},
-    "Password" : {},
-    "Password (8+ characters)" : {},
-    "Password must be at least 8 characters." : {},
-    "Pin" : {},
-    "Pin to profile" : {},
-    "Poster: %@" : {},
-    "Private" : {},
-    "Private profile" : {},
-    "Profile" : {},
-    "Profile collections" : {},
-    "Profile menu" : {},
-    "Profile photo" : {},
-    "Profile photo crop area" : {},
-    "Profile unavailable" : {},
-    "Public" : {},
-    "Public collection" : {},
-    "Rate" : {},
-    "Rate movies and write reviews on their pages." : {},
-    "Rating" : {},
-    "Rating %lld of 10" : {},
-    "Remove" : {},
-    "Remove banner" : {},
-    "Remove from saved collections" : {},
-    "Remove profile photo" : {},
-    "Reorder" : {},
-    "Retry" : {},
-    "Review" : {},
-    "Reviews" : {},
-    "Save" : {},
-    "Save \"%@\" to a collection" : {},
-    "Save collection" : {},
-    "Save to collection" : {},
-    "Save to my colors" : {},
-    "Saved" : {},
-    "Search" : {},
-    "Search in collection" : {},
-    "Search movies" : {},
-    "Section" : {},
-    "Shown on your profile" : {},
-    "Shown on your profile. Names don't have to be unique. Your @%@ username can't be changed." : {},
-    "Shows all" : {},
-    "Sign up" : {},
-    "Sort" : {},
-    "TMDB %@" : {},
-    "TMDB key is not set. Add it to Config/Secrets.xcconfig (see README)." : {},
-    "Tap the bookmark on other people's collections to keep them here." : {},
-    "Tap the heart on a movie page to add it here." : {},
-    "The TMDB key was rejected. Check the value in Config/Secrets.xcconfig." : {},
-    "The author made this collection private." : {},
-    "The card on your profile is painted with this gradient." : {
-      "extractionState" : "stale"
+    " " : {
+
     },
-    "The catalog has temporarily limited requests. Wait a moment and try again." : {},
-    "The catalog is temporarily unavailable (code %lld). Please try later." : {},
-    "The list is empty" : {},
-    "The review is too long: at most %lld characters." : {},
-    "The same gradient looks brighter in light mode and calmer in dark mode. Others see your color too." : {},
-    "This collection has no movies yet." : {},
-    "This collection is not available." : {},
-    "This is your own collection — it is already on your profile." : {},
-    "This profile is private" : {},
-    "This user has hidden their collections, favorite movies and reviews." : {},
-    "This user hasn't picked any favorites yet." : {},
-    "This user hasn't shared anything yet." : {},
-    "This username is taken. Choose another one." : {},
-    "Title" : {},
-    "Too many attempts. Try again in %lld min." : {},
-    "Too many attempts. Try again in %lld s." : {},
-    "Top color" : {},
-    "Unlike" : {},
-    "Unpin" : {},
-    "Up to %lld. Drag to change the order." : {},
-    "Username" : {},
-    "Username: 3–20 characters, Latin letters, digits and \"_\"." : {},
-    "Visible only to you." : {},
-    "What do you think about the movie? (optional)" : {},
-    "What is this collection about" : {},
-    "Wrong username or password." : {},
-    "You can have at most %lld favorite movies. Remove one to add a new one." : {},
-    "You can only edit your own collections." : {},
-    "You can only edit your own reviews." : {},
-    "You can only like other people's collections." : {},
-    "You can pin up to %lld collections. Unpin one first." : {},
-    "You can't follow yourself." : {},
-    "Your gradient" : {},
-    "Your profile, collections, reviews and favorites will be permanently deleted from this device. This cannot be undone." : {},
-    "Your rating" : {},
-    "Your review" : {},
-    "Zoom" : {},
-    "by %@" : {},
-    "e.g. \"Movies for a rainy evening\"" : {},
-    "more" : {},
-    "not selected" : {},
-    "themoviedb.org" : {},
-    "·" : {},
-    "· %@" : {}
+    "  %lld characters left" : {
+
+    },
+    "·" : {
+
+    },
+    "· %@" : {
+
+    },
+    "@%@" : {
+
+    },
+    "%@ · %@" : {
+
+    },
+    "%@ · %@ · %@" : {
+
+    },
+    "%@'s collections" : {
+
+    },
+    "%@'s favorites" : {
+
+    },
+    "%@'s reviews" : {
+
+    },
+    "%lld" : {
+
+    },
+    "%lld characters left" : {
+
+    },
+    "%lld min" : {
+
+    },
+    "%lld of %lld" : {
+
+    },
+    "%lld of 10" : {
+
+    },
+    "A few words about your taste" : {
+
+    },
+    "About me" : {
+
+    },
+    "Accounts are stored only on this device." : {
+
+    },
+    "Add a bio in Edit profile" : {
+
+    },
+    "Add movies from the feed and search with the bookmark button." : {
+
+    },
+    "Add movies with the heart on a movie page" : {
+
+    },
+    "Add to favorites" : {
+
+    },
+    "Added" : {
+
+    },
+    "Author's order" : {
+
+    },
+    "Banner" : {
+
+    },
+    "Banner crop area" : {
+
+    },
+    "Bottom color" : {
+
+    },
+    "by %@" : {
+
+    },
+    "By rating" : {
+
+    },
+    "By title" : {
+
+    },
+    "By year" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Change banner" : {
+
+    },
+    "Change profile photo" : {
+
+    },
+    "Characters left: %lld" : {
+
+    },
+    "Choose" : {
+
+    },
+    "Choose a rating" : {
+
+    },
+    "CineBoard" : {
+
+    },
+    "CineBoard %@ · %@" : {
+
+    },
+    "Collection actions" : {
+
+    },
+    "Collection unavailable" : {
+
+    },
+    "Collections" : {
+
+    },
+    "Color" : {
+
+    },
+    "Confirm with your password" : {
+
+    },
+    "Could not load" : {
+
+    },
+    "Could not load more. Retry" : {
+
+    },
+    "Could not read the catalog response. Please try later." : {
+
+    },
+    "Could not read this image." : {
+
+    },
+    "Could not save changes. Please try again." : {
+
+    },
+    "Could not save data on this device. Please try again." : {
+
+    },
+    "Could not save the review. Please try again." : {
+
+    },
+    "Create account" : {
+
+    },
+    "Create collection" : {
+
+    },
+    "Create your first collection — the movie will go straight into it." : {
+
+    },
+    "Create your first collection and save movies to it from the feed and search." : {
+
+    },
+    "Create your first collection on the Collections tab." : {
+
+    },
+    "Custom colors" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete account" : {
+
+    },
+    "Delete account and all data" : {
+
+    },
+    "Delete account…" : {
+
+    },
+    "Delete collection" : {
+
+    },
+    "Delete collection \"%@\"?" : {
+
+    },
+    "Delete review" : {
+
+    },
+    "Delete review?" : {
+
+    },
+    "Demo profile" : {
+
+    },
+    "Description" : {
+
+    },
+    "Discover" : {
+
+    },
+    "Done" : {
+
+    },
+    "Drag to reposition. Use the slider to zoom." : {
+
+    },
+    "e.g. \"Movies for a rainy evening\"" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit profile" : {
+
+    },
+    "Editing" : {
+
+    },
+    "Enter a collection title." : {
+
+    },
+    "Enter a movie title to find it in the TMDB catalog." : {
+
+    },
+    "Error" : {
+
+    },
+    "Favorite movies" : {
+
+    },
+    "Feed" : {
+
+    },
+    "Find movies and build collections" : {
+
+    },
+    "Follow" : {
+
+    },
+    "Followers" : {
+
+    },
+    "Following" : {
+
+    },
+    "Friends" : {
+
+    },
+    "Give a rating from 1 to 10." : {
+
+    },
+    "Home" : {
+
+    },
+    "In favorites" : {
+
+    },
+    "Like" : {
+
+    },
+    "Likes" : {
+
+    },
+    "Loading" : {
+
+    },
+    "Loading details…" : {
+
+    },
+    "Log in" : {
+
+    },
+    "Log out" : {
+
+    },
+    "Log out of your account?" : {
+
+    },
+    "Mine" : {
+
+    },
+    "Mode" : {
+
+    },
+    "more" : {
+
+    },
+    "Move and zoom — the circle is what will be visible." : {
+
+    },
+    "Move and zoom — the frame is what will be visible on your profile." : {
+
+    },
+    "Movie data provided by TMDB. This app uses the TMDB API but is not endorsed or certified by TMDB." : {
+
+    },
+    "Movie order" : {
+
+    },
+    "Movie title" : {
+
+    },
+    "Movies in the catalog are unaffected, but the collection will be gone for good." : {
+
+    },
+    "My collections" : {
+
+    },
+    "My colors" : {
+
+    },
+    "My favorites" : {
+
+    },
+    "My review" : {
+
+    },
+    "My reviews" : {
+
+    },
+    "Name" : {
+
+    },
+    "New collection" : {
+
+    },
+    "Newest first" : {
+
+    },
+    "No CineBoard ratings yet" : {
+
+    },
+    "No collections yet" : {
+
+    },
+    "No connection to the catalog. Showing saved data." : {
+
+    },
+    "No description available." : {
+
+    },
+    "No favorite movies yet" : {
+
+    },
+    "No followers yet" : {
+
+    },
+    "No internet connection. Check your network and try again." : {
+
+    },
+    "No other reviews yet." : {
+
+    },
+    "No reviews yet" : {
+
+    },
+    "No reviews yet." : {
+
+    },
+    "No reviews yet. Be the first!" : {
+
+    },
+    "No saved collections" : {
+
+    },
+    "Not added" : {
+
+    },
+    "Not following anyone yet" : {
+
+    },
+    "not selected" : {
+
+    },
+    "Nothing here yet" : {
+
+    },
+    "Nothing pinned — your newest %lld collections are shown." : {
+
+    },
+    "Nothing to show yet" : {
+
+    },
+    "OK" : {
+
+    },
+    "Open author profile %@" : {
+
+    },
+    "Other collections" : {
+
+    },
+    "Other users will see it on your profile." : {
+
+    },
+    "Other users won't see your collections, favorite movies and review list. Reviews on movie pages remain visible to everyone." : {
+
+    },
+    "Other users' public collections will appear here." : {
+
+    },
+    "Password" : {
+
+    },
+    "Password (8+ characters)" : {
+
+    },
+    "Password must be at least 8 characters." : {
+
+    },
+    "Pin" : {
+
+    },
+    "Pin to profile" : {
+
+    },
+    "Poster: %@" : {
+
+    },
+    "Private" : {
+
+    },
+    "Private profile" : {
+
+    },
+    "Profile" : {
+
+    },
+    "Profile collections" : {
+
+    },
+    "Profile menu" : {
+
+    },
+    "Profile photo" : {
+
+    },
+    "Profile photo crop area" : {
+
+    },
+    "Profile unavailable" : {
+
+    },
+    "Public" : {
+
+    },
+    "Public collection" : {
+
+    },
+    "Rate" : {
+
+    },
+    "Rate movies and write reviews on their pages." : {
+
+    },
+    "Rating" : {
+
+    },
+    "Rating %lld of 10" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Remove banner" : {
+
+    },
+    "Remove from saved collections" : {
+
+    },
+    "Remove profile photo" : {
+
+    },
+    "Reorder" : {
+
+    },
+    "Retry" : {
+
+    },
+    "Review" : {
+
+    },
+    "Reviews" : {
+
+    },
+    "Save" : {
+
+    },
+    "Save \"%@\" to a collection" : {
+
+    },
+    "Save collection" : {
+
+    },
+    "Save to collection" : {
+
+    },
+    "Save to my colors" : {
+
+    },
+    "Saved" : {
+
+    },
+    "Search" : {
+
+    },
+    "Search in collection" : {
+
+    },
+    "Search movies" : {
+
+    },
+    "Section" : {
+
+    },
+    "Shown on your profile" : {
+
+    },
+    "Shown on your profile. Names don't have to be unique. Your @%@ username can't be changed." : {
+
+    },
+    "Shows all" : {
+
+    },
+    "Sign up" : {
+
+    },
+    "Sort" : {
+
+    },
+    "Tap the bookmark on other people's collections to keep them here." : {
+
+    },
+    "Tap the heart on a movie page to add it here." : {
+
+    },
+    "The author made this collection private." : {
+
+    },
+    "The catalog has temporarily limited requests. Wait a moment and try again." : {
+
+    },
+    "The catalog is temporarily unavailable (code %lld). Please try later." : {
+
+    },
+    "The list is empty" : {
+
+    },
+    "The review is too long: at most %lld characters." : {
+
+    },
+    "The same gradient looks brighter in light mode and calmer in dark mode. Others see your color too." : {
+
+    },
+    "The TMDB key was rejected. Check the value in Config/Secrets.xcconfig." : {
+
+    },
+    "themoviedb.org" : {
+
+    },
+    "This collection has no movies yet." : {
+
+    },
+    "This collection is not available." : {
+
+    },
+    "This is your own collection — it is already on your profile." : {
+
+    },
+    "This profile is private" : {
+
+    },
+    "This user has hidden their collections, favorite movies and reviews." : {
+
+    },
+    "This user hasn't picked any favorites yet." : {
+
+    },
+    "This user hasn't shared anything yet." : {
+
+    },
+    "This username is taken. Choose another one." : {
+
+    },
+    "Title" : {
+
+    },
+    "TMDB %@" : {
+
+    },
+    "TMDB key is not set. Add it to Config/Secrets.xcconfig (see README)." : {
+
+    },
+    "Too many attempts. Try again in %lld min." : {
+
+    },
+    "Too many attempts. Try again in %lld s." : {
+
+    },
+    "Top color" : {
+
+    },
+    "Unlike" : {
+
+    },
+    "Unpin" : {
+
+    },
+    "Up to %lld. Drag to change the order." : {
+
+    },
+    "Username" : {
+
+    },
+    "Username: 3–20 characters, Latin letters, digits and \"_\"." : {
+
+    },
+    "Visible only to you." : {
+
+    },
+    "What do you think about the movie? (optional)" : {
+
+    },
+    "What is this collection about" : {
+
+    },
+    "Wrong username or password." : {
+
+    },
+    "You can have at most %lld favorite movies. Remove one to add a new one." : {
+
+    },
+    "You can only edit your own collections." : {
+
+    },
+    "You can only edit your own reviews." : {
+
+    },
+    "You can only like other people's collections." : {
+
+    },
+    "You can pin up to %lld collections. Unpin one first." : {
+
+    },
+    "You can't follow yourself." : {
+
+    },
+    "Your gradient" : {
+
+    },
+    "Your profile, collections, reviews and favorites will be permanently deleted from this device. This cannot be undone." : {
+
+    },
+    "Your rating" : {
+
+    },
+    "Your review" : {
+
+    },
+    "Zoom" : {
+
+    }
   },
   "version" : "1.0"
 }
