@@ -162,6 +162,13 @@ struct LocalAuthProvider: AuthProvider {
         try save()
     }
 
+    func setSavedThemes(_ codes: [String], for user: UserAccount) throws {
+        var unique: [String] = []
+        for code in codes where CollectionTheme.parseCustom(code) != nil && !unique.contains(code) { unique.append(code) }
+        user.savedThemes = unique.prefix(CollectionRules.savedThemesLimit).joined(separator: ",")
+        try save()
+    }
+
     /// Удаляет аккаунт и все его данные (подборки, отзывы, любимые) после подтверждения паролем.
     func deleteAccount(_ user: UserAccount, password: String) throws {
         let name = user.username
@@ -267,6 +274,11 @@ final class AppSession {
     func updateProfile(_ edit: ProfileEdit) throws {
         guard let user = currentUser else { return }
         try auth.updateProfile(edit, for: user)
+    }
+
+    func setSavedThemes(_ codes: [String]) throws {
+        guard let user = currentUser else { return }
+        try auth.setSavedThemes(codes, for: user)
     }
 
     /// Необратимо удаляет аккаунт и все данные пользователя, затем выходит.

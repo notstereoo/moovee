@@ -9,6 +9,8 @@ protocol AuthProvider {
     func updateBio(_ bio: String, for user: UserAccount) throws
     func setProfilePrivate(_ isPrivate: Bool, for user: UserAccount) throws
     func updateProfile(_ edit: ProfileEdit, for user: UserAccount) throws
+    /// Личная палитра: свои цвета подборок (коды `RRGGBB-RRGGBB`).
+    func setSavedThemes(_ codes: [String], for user: UserAccount) throws
     /// Удаляет аккаунт и все его данные; требует пароль.
     func deleteAccount(_ user: UserAccount, password: String) throws
 }
@@ -125,6 +127,8 @@ protocol SocialRepository: AnyObject {
     func setLiked(_ liked: Bool, _ collection: MovieCollection, as user: UserAccount) throws
 
     // Сохранённые подборки
+    /// Сколько пользователей сохранили подборку себе.
+    func saveCount(of collection: MovieCollection) -> Int
     func isSaved(_ collection: MovieCollection, by user: UserAccount) -> Bool
     func setSaved(_ saved: Bool, _ collection: MovieCollection, as user: UserAccount) throws
     /// Сохранённые подборки, которые пользователю по-прежнему разрешено видеть; новые сверху.
@@ -132,6 +136,7 @@ protocol SocialRepository: AnyObject {
 }
 
 enum CollectionRules {
+    static let savedThemesLimit = 12
     /// Сколько подборок и отзывов показывается прямо в профиле; остальные — на экране «все».
     static let profileLimit = 3
 }

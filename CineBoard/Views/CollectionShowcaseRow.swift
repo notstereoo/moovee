@@ -1,12 +1,12 @@
 import SwiftUI
 
 /// Подборка «витриной»: цветная карточка с переливающимся градиентом, стопкой обложек слева
-/// (до пяти, каждая следующая меньше и выглядывает из-под предыдущей), названием, числом фильмов и лайков
-/// и описанием. В зеркальной карточке всё отражено: обложки справа, текст слева.
+/// (до пяти, каждая следующая меньше и выглядывает из-под предыдущей), названием, числом фильмов, лайков
+/// и сохранений и описанием. Цвета подстраиваются под светлую и тёмную тему устройства.
 struct CollectionShowcaseCard: View {
     let collection: MovieCollection
     let likes: Int
-    var mirrored = false
+    var saves = 0
     var showsSave = false
     var isSaved = false
     var onToggleSave: () -> Void = {}
@@ -14,7 +14,7 @@ struct CollectionShowcaseCard: View {
     private var theme: CollectionTheme { CollectionTheme.resolve(for: collection) }
 
     var body: some View {
-        ZStack(alignment: mirrored ? .topLeading : .topTrailing) {
+        ZStack(alignment: .topTrailing) {
             NavigationLink(value: collection) { card }
                 .buttonStyle(.plain)
             if showsSave { saveButton }
@@ -22,54 +22,50 @@ struct CollectionShowcaseCard: View {
     }
 
     private var card: some View {
-        HStack(alignment: .top, spacing: 16) {
-            if mirrored {
-                info
-                CoverStack(collection: collection, mirrored: true)
-            } else {
-                CoverStack(collection: collection, mirrored: false)
-                info
-            }
+        // Обложки по центру карточки по вертикали, текст прижат к верху.
+        HStack(alignment: .center, spacing: 16) {
+            CoverStack(collection: collection)
+            info
         }
         .padding(16)
         .frame(maxWidth: .infinity)
         .background { AnimatedThemeBackground(theme: theme, seed: collection.id) }
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: theme.bottom.opacity(0.35), radius: 14, y: 8)
+        .shadow(color: theme.bottom.opacity(0.3), radius: 14, y: 8)
         .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
     private var info: some View {
-        VStack(alignment: mirrored ? .trailing : .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(collection.title)
                 .font(.title2.bold())
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .lineLimit(2)
-                .multilineTextAlignment(mirrored ? .trailing : .leading)
+                .multilineTextAlignment(.leading)
                 // Место под кнопку сохранения в углу.
-                .padding(mirrored ? .leading : .trailing, showsSave ? 38 : 0)
+                .padding(.trailing, showsSave ? 38 : 0)
             HStack(spacing: 6) {
                 if !collection.isPublic { Image(systemName: "lock.fill") }
-                Text("\(filmsText(collection.items.count)) · \(likesText(likes))")
+                Text("\(filmsText(collection.items.count)) · \(likesText(likes)) · \(savesText(saves))")
             }
             .font(.caption.weight(.medium))
-            .foregroundStyle(.white.opacity(0.78))
+            .foregroundStyle(.primary.opacity(0.7))
             if !collection.details.isEmpty {
-                MoreText(text: collection.details, lines: 4, trailing: mirrored, color: .white.opacity(0.82))
+                MoreText(text: collection.details, lines: 4, color: .primary.opacity(0.78))
             }
         }
-        .frame(maxWidth: .infinity, alignment: mirrored ? .topTrailing : .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var saveButton: some View {
         Button(action: onToggleSave) {
             Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .frame(width: 34, height: 34)
-                .background(.white.opacity(isSaved ? 0.32 : 0.2), in: Circle())
-                .overlay(Circle().stroke(.white.opacity(0.25)))
+                .background(Color.primary.opacity(isSaved ? 0.2 : 0.1), in: Circle())
+                .overlay(Circle().stroke(Color.primary.opacity(0.15)))
         }
         .buttonStyle(.plain)
         .padding(12)
@@ -77,10 +73,11 @@ struct CollectionShowcaseCard: View {
     }
 }
 
-/// Стопка обложек: главная целиком, остальные (до четырёх) меньше и выглядывают из-под неё.
+func savesText(_ n: Int) -> String { n == 1 ? "1 save" : "\(n) saves" }
+
+/// Стопка обложек: главная целиком, остальные (до четырёх) меньше и выглядывают из-под неё вправо.
 private struct CoverStack: View {
     let collection: MovieCollection
-    let mirrored: Bool
     private let mainWidth: CGFloat = 96
     private let peek: CGFloat = 20
     private let shrink: CGFloat = 0.09
@@ -112,31 +109,36 @@ private struct CoverStack: View {
                 let height = mainHeight * scale
                 PosterImage(path: path, title: collection.title, size: .w185, ratio: 1.5)
                     .frame(width: width, height: height)
-                    .shadow(color: .black.opacity(0.35), radius: 6, x: mirrored ? -2 : 2, y: 3)
-                    .offset(x: left(index, width: width, count: list.count), y: (mainHeight - height) / 2)
+                    .shadow(color: .black.opacity(0.3), radius: 6, x: 2, y: 3)
+                    .offset(x: left(index, width: width), y: (mainHeight - height) / 2)
             }
         }
+        // Фиксированный размер: стопка не «плывёт» вверх, даже если рядом много текста.
         .frame(width: totalWidth, height: mainHeight, alignment: .topLeading)
+        .fixedSize()
         .accessibilityHidden(true)
     }
 
-    /// Левый край обложки: следующая выглядывает вправо (в зеркальной карточке — влево).
-    private func left(_ index: Int, width: CGFloat, count: Int) -> CGFloat {
-        let normal = index == 0 ? 0 : mainWidth + peek * CGFloat(index) - width
-        return mirrored ? totalWidth - (normal + width) : normal
+    /// Левый край обложки: следующая выглядывает вправо.
+    private func left(_ index: Int, width: CGFloat) -> CGFloat {
+        index == 0 ? 0 : mainWidth + peek * CGFloat(index) - width
     }
 }
 
-/// Фон карточки: градиент из двух цветов темы и несколько размытых пятен, медленно плывущих — как в Apple Music.
+/// Фон карточки: градиент из двух цветов темы и несколько размытых пятен, плывущих — как в Apple Music.
 struct AnimatedThemeBackground: View {
     let theme: CollectionTheme
     let seed: UUID
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
+    /// Скорость переливания (1 — исходная; 1.3 — на 30% быстрее).
+    static let speed = 1.3
 
     var body: some View {
         let phase = Double(abs(seed.hashValue % 1000)) / 160
+        let isDark = colorScheme == .dark
         TimelineView(.animation(minimumInterval: 1.0 / 24, paused: reduceMotion)) { context in
-            let t = reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate
+            let t = reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate * Self.speed
             ZStack {
                 LinearGradient(colors: [theme.top, theme.bottom], startPoint: .topLeading, endPoint: .bottomTrailing)
                 Ellipse()
@@ -155,7 +157,7 @@ struct AnimatedThemeBackground: View {
                     .fill(.white)
                     .frame(width: 150, height: 150)
                     .blur(radius: 44)
-                    .opacity(0.16)
+                    .opacity(isDark ? 0.12 : 0.32)
                     .offset(x: 70 * sin(t * 0.21 + phase * 2), y: 40 * cos(t * 0.31 + phase))
             }
             .drawingGroup()

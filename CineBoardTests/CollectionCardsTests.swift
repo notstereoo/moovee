@@ -1,4 +1,5 @@
 import SwiftData
+import SwiftUI
 import XCTest
 
 @testable import CineBoard
@@ -195,5 +196,160 @@ final class CollectionCardsTests: XCTestCase {
 
         try deps.session.login(username: "ian", password: "password1")
         XCTAssertFalse(model.canSave(c), "свои подборки сохранять не нужно")
+    }
+
+    // MARK: Светлые и тёмные оттенки
+
+    private func brightness(_ color: UIColor) -> CGFloat {
+        var h: CGFloat = 0, sat: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getHue(&h, saturation: &sat, brightness: &b, alpha: &a)
+        return b
+    }
+
+    private func saturation(_ color: UIColor) -> CGFloat {
+        var h: CGFloat = 0, sat: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getHue(&h, saturation: &sat, brightness: &b, alpha: &a)
+        return sat
+    }
+
+    func testEveryThemeIsLightInLightModeAndCalmInDark() {
+        XCTAssertGreaterThanOrEqual(CollectionTheme.all.count, 30, "палитра заметно расширена")
+        for theme in CollectionTheme.all {
+            XCTAssertGreaterThan(brightness(theme.lightTop), 0.9, theme.id)
+            XCTAssertGreaterThan(brightness(theme.lightBottom), 0.8, theme.id)
+            XCTAssertLessThanOrEqual(brightness(theme.darkTop), 0.47, theme.id)
+            XCTAssertLessThanOrEqual(brightness(theme.darkBottom), 0.27, theme.id)
+            XCTAssertGreaterThan(brightness(theme.lightTop), brightness(theme.darkTop), theme.id)
+            XCTAssertLessThanOrEqual(saturation(theme.darkTop), saturation(UIColor(hex: theme.baseTop)) + 0.001, theme.id)
+        }
+    }
+
+    func testAlreadyDarkCalmThemesKeepTheirBrightnessInDarkMode() throws {
+        for id in ["graphite", "slate"] {
+            let theme = try XCTUnwrap(CollectionTheme.theme(withID: id))
+            XCTAssertEqual(brightness(theme.darkBottom), brightness(UIColor(hex: theme.baseBottom)), accuracy: 0.01, id)
+            XCTAssertEqual(
+                brightness(theme.darkTop), min(brightness(UIColor(hex: theme.baseTop)), 0.46), accuracy: 0.01, id)
+        }
+    }
+
+    func testAdaptiveColorsFollowInterfaceStyle() throws {
+        let theme = try XCTUnwrap(CollectionTheme.theme(withID: "ocean"))
+        let color = UIColor(theme.top)
+        let light = color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        let dark = color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+        XCTAssertEqual(light.rgbHex, theme.lightTop.rgbHex)
+        XCTAssertEqual(dark.rgbHex, theme.darkTop.rgbHex)
+        XCTAssertNotEqual(light.rgbHex, dark.rgbHex)
+    }
+
+    // MARK: Свои цвета
+
+    func testCustomThemeCodesRoundTrip() throws {
+        let code = CollectionTheme.customCode(top: 0xFF8800, bottom: 0x3355AA)
+        XCTAssertEqual(code, "custom:FF8800-3355AA")
+        let parsed = try XCTUnwrap(CollectionTheme.parseCustom(code))
+        XCTAssertEqual(parsed.top, 0xFF8800)
+        XCTAssertEqual(parsed.bottom, 0x3355AA)
+        XCTAssertNotNil(CollectionTheme.parseCustom("FF8800-3355AA"), "без префикса тоже")
+        for bad in ["", "custom:", "custom:FF8800", "custom:GG0000-111111", "custom:FF88-3355AA", "ember"] {
+            XCTAssertNil(CollectionTheme.parseCustom(bad), bad)
+        }
+        XCTAssertTrue(CollectionTheme.isCustom(code))
+        XCTAssertFalse(CollectionTheme.isCustom("ember"))
+    }
+
+    func testCustomColorsAreStoredOnCollectionAndVisibleToOthers() throws {
+        let owner = try signUp("kit")
+        let c = try deps.collections.create(title: "Mine", details: "", isPublic: true, as: owner)
+        let code = CollectionTheme.customCode(top: 0x112233, bottom: 0xAABBCC)
+        try deps.collections.setTheme(code, of: c, as: owner)
+
+        _ = try signUp("lea")  // другой пользователь видит те же цвета
+        let theme = CollectionTheme.resolve(for: c)
+        XCTAssertEqual(theme.id, code)
+        XCTAssertEqual(theme.baseTop, 0x112233)
+        XCTAssertEqual(theme.baseBottom, 0xAABBCC)
+
+        c.themeID = "custom:broken"  // битый код → безопасный цвет по умолчанию
+        XCTAssertTrue(CollectionTheme.all.contains(CollectionTheme.resolve(for: c)))
+    }
+
+    func testEditorCustomColorFlow() throws {
+        let me = try signUp("moe")
+        let editor = deps.makeEditorViewModel(collection: nil)
+        XCTAssertFalse(editor.isCustom)
+        editor.selectCustom()  // стартует с текущих цветов
+        XCTAssertTrue(editor.isCustom)
+        editor.customTop = Color(UIColor(hex: 0x204060))
+        editor.customBottom = Color(UIColor(hex: 0xA0C0E0))
+        editor.customColorsChanged()
+        XCTAssertEqual(editor.themeID, "custom:204060-A0C0E0")
+        XCTAssertEqual(editor.currentTheme.baseTop, 0x204060)
+
+        editor.title = "Palette"
+        let created = try XCTUnwrap(editor.save())
+        XCTAssertEqual(created.themeID, "custom:204060-A0C0E0")
+        XCTAssertEqual(CollectionTheme.resolve(for: created).baseBottom, 0xA0C0E0)
+
+        // Выбор готовой темы выходит из режима своих цветов.
+        editor.select(CollectionTheme.all[0])
+        XCTAssertFalse(editor.isCustom)
+        XCTAssertTrue(me.collections.contains { $0.id == created.id })
+    }
+
+    // MARK: Личная палитра
+
+    func testSavedPaletteRoundTripLimitAndDedup() throws {
+        let me = try signUp("nia")
+        let editor = deps.makeEditorViewModel(collection: nil)
+        XCTAssertTrue(editor.savedThemes.isEmpty)
+        XCTAssertFalse(editor.canSaveCustom, "готовую тему сохранять в «свои» нельзя")
+
+        editor.selectCustom()
+        XCTAssertTrue(editor.canSaveCustom)
+        editor.saveCustomToPalette()
+        XCTAssertEqual(editor.savedThemes.count, 1)
+        XCTAssertFalse(editor.canSaveCustom, "те же цвета повторно не сохраняются")
+        XCTAssertEqual(me.savedThemeCodes, editor.savedThemes, "палитра хранится в профиле")
+
+        // Новая сессия редактора видит сохранённые цвета и может применить их.
+        let again = deps.makeEditorViewModel(collection: nil)
+        let code = try XCTUnwrap(again.savedThemes.first)
+        again.select(CollectionTheme.all[5])
+        again.useSaved(code)
+        XCTAssertEqual(again.themeID, CollectionTheme.customPrefix + code)
+
+        again.removeSaved(code)
+        XCTAssertTrue(again.savedThemes.isEmpty)
+        XCTAssertTrue(me.savedThemeCodes.isEmpty)
+    }
+
+    func testSavedPaletteLimitAndInvalidCodes() throws {
+        let me = try signUp("ozzy")
+        let many = (0..<20).map { String(format: "%06X-%06X", $0 * 1000 + 1, $0 * 2000 + 5) }
+        try deps.session.setSavedThemes(many + ["nonsense", many[0]])
+        XCTAssertEqual(me.savedThemeCodes.count, CollectionRules.savedThemesLimit)
+        XCTAssertFalse(me.savedThemeCodes.contains("nonsense"))
+        XCTAssertEqual(Set(me.savedThemeCodes).count, me.savedThemeCodes.count)
+    }
+
+    // MARK: Счётчик сохранений
+
+    func testSaveCountCountsAllSavers() throws {
+        let owner = try signUp("pip")
+        let c = try makeCollections(1, for: owner)[0]
+        let model = deps.makeProfileViewModel(user: owner)
+        XCTAssertEqual(model.saveCount(of: c), 0)
+        for name in ["quo1", "quo2", "quo3"] {
+            let user = try signUp(name)
+            try deps.social.setSaved(true, c, as: user)
+        }
+        XCTAssertEqual(model.saveCount(of: c), 3)
+        try deps.social.setSaved(false, c, as: deps.session.currentUser!)
+        XCTAssertEqual(model.saveCount(of: c), 2)
+        XCTAssertEqual(savesText(0), "0 saves")
+        XCTAssertEqual(savesText(1), "1 save")
+        XCTAssertEqual(savesText(2), "2 saves")
     }
 }

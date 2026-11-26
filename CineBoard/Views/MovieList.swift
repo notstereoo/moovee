@@ -45,7 +45,7 @@ struct MovieMasonry: View {
     @ViewBuilder
     private func card(_ movie: Movie) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            ZStack(alignment: .bottomTrailing) {
+            ZStack(alignment: .topTrailing) {
                 NavigationLink(value: movie) {
                     PosterImage(path: movie.posterPath, title: movie.title, size: .w342, ratio: Self.ratio(for: movie))
                 }
@@ -55,11 +55,13 @@ struct MovieMasonry: View {
                     Button {
                         onSave(movie)
                     } label: {
-                        Image(systemName: "bookmark.fill")
-                            .font(.subheadline)
+                        Image(systemName: "plus")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.primary)
                             .frame(width: 36, height: 36)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .glassCircle()
                     }
+                    .buttonStyle(.plain)
                     .padding(8)
                     .accessibilityLabel("Save \"\(movie.title)\" to a collection")
                 }

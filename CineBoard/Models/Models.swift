@@ -92,6 +92,8 @@ final class UserAccount {
     var isProfilePrivate: Bool = false
     /// Отображаемое имя (может повторяться у разных людей). Пусто — показываем никнейм.
     var displayName: String = ""
+    /// Сохранённые «свои цвета» подборок: коды `RRGGBB-RRGGBB` через запятую (не больше `CollectionRules.savedThemesLimit`).
+    var savedThemes: String = ""
     /// Аватар и баннер хранятся уменьшенными JPEG-файлами рядом с базой.
     @Attribute(.externalStorage) var avatarData: Data?
     @Attribute(.externalStorage) var bannerData: Data?
@@ -113,6 +115,10 @@ final class UserAccount {
         self.salt = salt
         self.isDemo = isDemo
         self.createdAt = .now
+    }
+
+    var savedThemeCodes: [String] {
+        savedThemes.split(separator: ",").map(String.init).filter { CollectionTheme.parseCustom($0) != nil }
     }
 
     /// Имя для показа в интерфейсе: отображаемое имя или, если его нет, никнейм.

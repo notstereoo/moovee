@@ -27,7 +27,6 @@ private struct ProfileContent: View {
     @State private var showEditProfile = false
     @State private var showDeleteAccount = false
     @State private var confirmLogout = false
-    @State private var showPinEditor = false
 
     private var user: UserAccount { model.user }
     private let bannerHeight: CGFloat = 200
@@ -92,7 +91,6 @@ private struct ProfileContent: View {
         }
         .sheet(isPresented: $showEditProfile) { ProfileEditorView() }
         .sheet(isPresented: $showDeleteAccount) { DeleteAccountView() }
-        .sheet(isPresented: $showPinEditor) { FeaturedCollectionsEditor(model: model) }
         .confirmationDialog("Log out of your account?", isPresented: $confirmLogout, titleVisibility: .visible) {
             Button("Log out", role: .destructive) { session.logout() }
             Button("Cancel", role: .cancel) {}
@@ -276,13 +274,7 @@ private struct ProfileContent: View {
     private var collectionsSection: some View {
         let featured = model.featuredCollections
         return VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                SectionLink(title: model.isMe ? "My collections" : "Collections", route: .collections(user))
-                Spacer()
-                if model.isMe && !model.collections.isEmpty {
-                    Button("Pin") { showPinEditor = true }.font(.subheadline)
-                }
-            }
+            SectionLink(title: model.isMe ? "My collections" : "Collections", route: .collections(user))
             if featured.isEmpty {
                 Text(
                     model.isMe
@@ -291,7 +283,6 @@ private struct ProfileContent: View {
                 )
                 .foregroundStyle(.secondary).font(.subheadline)
             } else {
-                // По одной подборке в строке; обложки слева, затем справа, и так по очереди.
                 ShowcaseList(model: model, collections: featured)
             }
         }
@@ -430,16 +421,16 @@ struct SectionLink: View {
     }
 }
 
-/// Подборки карточками по очереди: обложки слева, затем справа и так далее.
+/// Подборки карточками, одна под другой; всё выровнено по левому краю.
 struct ShowcaseList: View {
     let model: ProfileViewModel
     let collections: [MovieCollection]
 
     var body: some View {
         LazyVStack(spacing: 18) {
-            ForEach(Array(collections.enumerated()), id: \.element.id) { index, c in
+            ForEach(collections) { c in
                 CollectionShowcaseCard(
-                    collection: c, likes: model.likeCount(of: c), mirrored: index % 2 == 1,
+                    collection: c, likes: model.likeCount(of: c), saves: model.saveCount(of: c),
                     showsSave: model.canSave(c), isSaved: model.isSaved(c), onToggleSave: { model.toggleSave(c) })
             }
         }

@@ -110,6 +110,13 @@ final class LocalSocialRepository: SocialRepository {
 
     // MARK: Сохранённые подборки
 
+    func saveCount(of collection: MovieCollection) -> Int {
+        let id = collection.id
+        return
+            (try? context.fetchCount(FetchDescriptor<SavedCollection>(predicate: #Predicate { $0.collectionID == id })))
+            ?? 0
+    }
+
     func isSaved(_ collection: MovieCollection, by user: UserAccount) -> Bool {
         let u = user.id, c = collection.id
         let descriptor = FetchDescriptor<SavedCollection>(

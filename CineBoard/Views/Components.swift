@@ -286,3 +286,15 @@ private struct NativeSoftScrollEdge: ViewModifier {
 extension View {
     func softTopEdge() -> some View { modifier(SoftTopEdge()) }
 }
+
+extension View {
+    /// Круглая стеклянная подложка: Liquid Glass на iOS 26+, а на более ранних — полупрозрачный материал.
+    @ViewBuilder
+    func glassCircle() -> some View {
+        if #available(iOS 26.0, *) {
+            glassEffect(.regular.interactive(), in: Circle())
+        } else {
+            background(.ultraThinMaterial, in: Circle())
+        }
+    }
+}
