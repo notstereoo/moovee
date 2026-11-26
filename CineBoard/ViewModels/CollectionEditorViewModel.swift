@@ -6,6 +6,8 @@ final class CollectionEditorViewModel {
     var title: String
     var details: String
     var isPublic: Bool
+    /// Идентификатор цветовой темы карточки.
+    var themeID: String
     var errorMessage: String?
     private let repository: any CollectionRepository
     private let session: AppSession
@@ -17,6 +19,7 @@ final class CollectionEditorViewModel {
         title = collection?.title ?? ""
         details = collection?.details ?? ""
         isPublic = collection?.isPublic ?? true
+        themeID = collection.map { CollectionTheme.resolve(for: $0).id } ?? CollectionTheme.all[2].id
     }
 
     var canSave: Bool { !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -27,9 +30,12 @@ final class CollectionEditorViewModel {
         do {
             if let collection {
                 try repository.update(collection, title: title, details: details, isPublic: isPublic, as: user)
+                try repository.setTheme(themeID, of: collection, as: user)
                 return collection
             }
-            return try repository.create(title: title, details: details, isPublic: isPublic, as: user)
+            let created = try repository.create(title: title, details: details, isPublic: isPublic, as: user)
+            try repository.setTheme(themeID, of: created, as: user)
+            return created
         } catch {
             errorMessage = userMessage(for: error)
             return nil

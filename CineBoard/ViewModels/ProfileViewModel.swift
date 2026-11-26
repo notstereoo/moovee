@@ -48,6 +48,14 @@ final class ProfileViewModel {
         return user.collections(visibleTo: session.currentUser)
     }
 
+    /// Подборки, показанные прямо в профиле: закреплённые автором или самые новые (не больше трёх).
+    var featuredCollections: [MovieCollection] {
+        _ = collectionRepository.revision
+        return user.featuredCollections(visibleTo: session.currentUser)
+    }
+
+    var hasMoreCollections: Bool { collections.count > featuredCollections.count }
+
     var favorites: [FavoriteMovie] {
         _ = favoritesRepository.revision
         return isContentHidden ? [] : favoritesRepository.favorites(of: user)
@@ -57,6 +65,10 @@ final class ProfileViewModel {
         _ = reviewRepository.revision
         return isContentHidden ? [] : reviewRepository.reviews(by: user)
     }
+
+    /// Последние отзывы для профиля; остальные — на экране «все».
+    var featuredReviews: [Review] { Array(reviews.prefix(CollectionRules.profileLimit)) }
+    var hasMoreReviews: Bool { reviews.count > CollectionRules.profileLimit }
 
     /// Сохранённые чужие подборки видит только владелец профиля.
     var savedCollections: [MovieCollection] {
@@ -113,6 +125,47 @@ final class ProfileViewModel {
                 try social.follow(user, as: me)
             }
         } catch { errorMessage = userMessage(for: error) }
+    }
+
+    // MARK: Сохранение чужих подборок
+
+    /// Свои подборки сохранять не нужно — они уже в профиле.
+    func canSave(_ c: MovieCollection) -> Bool {
+        guard let me = session.currentUser else { return false }
+        return c.owner?.id != me.id
+    }
+
+    func isSaved(_ c: MovieCollection) -> Bool {
+        _ = social.revision
+        guard let me = session.currentUser else { return false }
+        return social.isSaved(c, by: me)
+    }
+
+    func toggleSave(_ c: MovieCollection) {
+        guard let me = session.currentUser else { return }
+        do { try social.setSaved(!social.isSaved(c, by: me), c, as: me) } catch {
+            errorMessage = userMessage(for: error)
+        }
+    }
+
+    // MARK: Закрепление подборок (только свои)
+
+    /// Закреплённые, по порядку.
+    var pinnedCollections: [MovieCollection] {
+        _ = collectionRepository.revision
+        return collections.filter { $0.pinPosition >= 0 }.sorted { $0.pinPosition < $1.pinPosition }
+    }
+
+    var unpinnedCollections: [MovieCollection] {
+        _ = collectionRepository.revision
+        return collections.filter { $0.pinPosition < 0 }
+    }
+
+    func pin(_ c: MovieCollection) { perform { try collectionRepository.pin(c, as: $0) } }
+    func unpin(_ c: MovieCollection) { perform { try collectionRepository.unpin(c, as: $0) } }
+
+    func movePinned(from source: IndexSet, to destination: Int) {
+        perform { try collectionRepository.movePinned(from: source, to: destination, as: $0) }
     }
 
     // MARK: Любимые (только свои)

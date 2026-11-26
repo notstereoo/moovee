@@ -121,6 +121,14 @@ final class UserAccount {
     /// Видно ли содержимое профиля (любимые, подборки, отзывы) этому зрителю.
     func isContentVisible(to viewer: UserAccount?) -> Bool { !isProfilePrivate || viewer?.id == id }
 
+    /// Подборки, которые показываются прямо в профиле (не больше `CollectionRules.profileLimit`):
+    /// закреплённые автором по порядку, а если ничего не закреплено — самые новые.
+    func featuredCollections(visibleTo viewer: UserAccount?) -> [MovieCollection] {
+        let visible = collections(visibleTo: viewer)
+        let pinned = visible.filter { $0.pinPosition >= 0 }.sorted { $0.pinPosition < $1.pinPosition }
+        return Array((pinned.isEmpty ? visible : pinned).prefix(CollectionRules.profileLimit))
+    }
+
     /// Коллекции этого пользователя, которые разрешено видеть `viewer`:
     /// владельцу — все, остальным — только публичные (если профиль открыт).
     func collections(visibleTo viewer: UserAccount?) -> [MovieCollection] {
@@ -145,6 +153,10 @@ final class MovieCollection {
     /// Явно выбранная обложка; если nil — постер первого фильма.
     var coverPosterPath: String?
     var createdAt: Date
+    /// Цветовая тема карточки (см. `CollectionTheme`); пусто — цвет подбирается автоматически.
+    var themeID: String = ""
+    /// Позиция среди закреплённых в профиле (0…2); −1 — не закреплена.
+    var pinPosition: Int = -1
     var owner: UserAccount?
 
     @Relationship(deleteRule: .cascade, inverse: \CollectionItem.collection)

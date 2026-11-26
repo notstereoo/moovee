@@ -2,13 +2,15 @@ import Foundation
 import SwiftData
 
 enum CollectionError: LocalizedError, Equatable {
-    case notOwner, emptyTitle, saveFailed
+    case notOwner, emptyTitle, saveFailed, pinLimitReached
 
     var errorDescription: String? {
         switch self {
         case .notOwner: String(localized: "You can only edit your own collections.")
         case .emptyTitle: String(localized: "Enter a collection title.")
         case .saveFailed: String(localized: "Could not save changes. Please try again.")
+        case .pinLimitReached:
+            String(localized: "You can pin up to \(CollectionRules.profileLimit) collections. Unpin one first.")
         }
     }
 }
@@ -65,7 +67,9 @@ final class LocalCollectionRepository: CollectionRepository {
     func delete(_ c: MovieCollection, as user: UserAccount) throws {
         try authorize(c, user)
         SocialCleanup.removeData(ofCollection: c.id, in: context)
+        let wasPinned = c.pinPosition >= 0
         context.delete(c)
+        if wasPinned { renumberPinned(of: user) }
         try commit()
     }
 
@@ -100,6 +104,44 @@ final class LocalCollectionRepository: CollectionRepository {
         let list = reordered(c.items(sortedBy: .manual), from: source, to: destination)
         for (index, item) in list.enumerated() { item.position = index }
         try commit()
+    }
+
+    func setTheme(_ themeID: String, of c: MovieCollection, as user: UserAccount) throws {
+        try authorize(c, user)
+        guard c.themeID != themeID else { return }
+        c.themeID = themeID
+        try commit()
+    }
+
+    func pin(_ c: MovieCollection, as user: UserAccount) throws {
+        try authorize(c, user)
+        guard c.pinPosition < 0 else { return }
+        let pinned = pinnedCollections(of: user)
+        guard pinned.count < CollectionRules.profileLimit else { throw CollectionError.pinLimitReached }
+        c.pinPosition = pinned.count
+        try commit()
+    }
+
+    func unpin(_ c: MovieCollection, as user: UserAccount) throws {
+        try authorize(c, user)
+        guard c.pinPosition >= 0 else { return }
+        c.pinPosition = -1
+        renumberPinned(of: user)
+        try commit()
+    }
+
+    func movePinned(from source: IndexSet, to destination: Int, as user: UserAccount) throws {
+        let list = reordered(pinnedCollections(of: user), from: source, to: destination)
+        for (index, c) in list.enumerated() { c.pinPosition = index }
+        try commit()
+    }
+
+    private func pinnedCollections(of user: UserAccount) -> [MovieCollection] {
+        collections(ownedBy: user).filter { $0.pinPosition >= 0 }.sorted { $0.pinPosition < $1.pinPosition }
+    }
+
+    private func renumberPinned(of user: UserAccount) {
+        for (index, c) in pinnedCollections(of: user).enumerated() { c.pinPosition = index }
     }
 
     private func authorize(_ c: MovieCollection, _ user: UserAccount) throws {

@@ -42,6 +42,8 @@ extension View {
                 switch route {
                 case .favorites(let user): FavoritesView(user: user)
                 case .followList(let user, let kind): FollowListView(user: user, kind: kind)
+                case .collections(let user): CollectionsListView(user: user)
+                case .reviews(let user): ReviewsListView(user: user)
                 }
             }
     }
@@ -194,6 +196,8 @@ struct TMDBAttribution: View {
 enum ProfileRoute: Hashable {
     case favorites(UserAccount)
     case followList(UserAccount, FollowListViewModel.Kind)
+    case collections(UserAccount)
+    case reviews(UserAccount)
 }
 
 /// Баннер профиля. Картинка лежит поверх прозрачной подложки, поэтому не раздувает раскладку.

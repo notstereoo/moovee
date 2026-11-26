@@ -26,6 +26,14 @@ final class CineBoardUITests: XCTestCase {
         dismissSavePasswordPrompt()
     }
 
+    /// Если диалог уже на экране — закрывает его сразу, без ожидания.
+    private func dismissSavePasswordPromptIfPresent() {
+        for title in ["Not Now", "Не сейчас"] where app.buttons[title].exists {
+            app.buttons[title].tap()
+            return
+        }
+    }
+
     /// Системное предложение сохранить пароль перекрывает экран после регистрации.
     private func dismissSavePasswordPrompt() {
         for title in ["Not Now", "Не сейчас"] {
@@ -41,6 +49,7 @@ final class CineBoardUITests: XCTestCase {
     private func tab(_ title: String) {
         let button = app.tabBars.buttons[title]
         for _ in 0..<4 {
+            dismissSavePasswordPromptIfPresent()
             button.tap()
             if button.isSelected { return }
             Thread.sleep(forTimeInterval: 0.5)
@@ -85,9 +94,10 @@ final class CineBoardUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 10))
         let rate = app.buttons["Rate"]
         // Нажатие сразу после системного диалога иногда теряется — повторяем.
-        for _ in 0..<3 {
+        for _ in 0..<4 {
+            dismissSavePasswordPromptIfPresent()
             card.tap()
-            if rate.waitForExistence(timeout: 5) { break }
+            if rate.waitForExistence(timeout: 6) { break }
         }
         XCTAssertTrue(rate.exists)
         rate.tap()

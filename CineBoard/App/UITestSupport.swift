@@ -76,14 +76,29 @@
                 details:
                     "Rain, synths and glowing signs. A long, slow walk through neon-lit streets after midnight: lonely androids, quiet drives, city lights reflected in puddles, and soundtracks that stay with you for weeks after the credits roll.",
                 isPublic: true, as: me)
-            for m in [movie(335984, "Blade Runner 2049", "2017"), movie(64690, "Drive", "2011"), movie(152601, "Her", "2013")] {
+            for m in [
+                movie(335984, "Blade Runner 2049", "2017"), movie(64690, "Drive", "2011"), movie(152601, "Her", "2013"),
+                movie(496243, "Parasite", "2019"), movie(244786, "Whiplash", "2014"), movie(329865, "Arrival", "2016"),
+            ] {
                 try deps.collections.add(m, to: neon, as: me)
             }
+            try deps.collections.setTheme("plum", of: neon, as: me)
             let cozy = try deps.collections.create(
                 title: "Cozy evening", details: "Warm and beautiful.", isPublic: true, as: me)
             for m in [movie(129, "Spirited Away", "2001"), movie(120467, "The Grand Budapest Hotel", "2014")] {
                 try deps.collections.add(m, to: cozy, as: me)
             }
+            try deps.collections.setTheme("forest", of: cozy, as: me)
+            let thrillers = try deps.collections.create(
+                title: "Weekend thrillers", details: "Tension you can cut with a knife.", isPublic: true, as: me)
+            for m in [movie(496243, "Parasite", "2019"), movie(329865, "Arrival", "2016")] {
+                try deps.collections.add(m, to: thrillers, as: me)
+            }
+            try deps.collections.setTheme("ember", of: thrillers, as: me)
+            let anime = try deps.collections.create(
+                title: "Animation night", details: "Hand-drawn worlds.", isPublic: true, as: me)
+            try deps.collections.add(movie(129, "Spirited Away", "2001"), to: anime, as: me)
+            try deps.collections.setTheme("ocean", of: anime, as: me)
             for m in [movie(496243, "Parasite", "2019"), movie(244786, "Whiplash", "2014"), movie(129, "Spirited Away", "2001")] {
                 try deps.favorites.add(m, as: me)
             }

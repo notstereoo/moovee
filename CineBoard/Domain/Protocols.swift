@@ -29,6 +29,12 @@ protocol CollectionRepository: AnyObject {
     func add(_ movie: Movie, to c: MovieCollection, as user: UserAccount) throws
     func remove(movieID: Int, from c: MovieCollection, as user: UserAccount) throws
     func setCover(of c: MovieCollection, movieID: Int, as user: UserAccount) throws
+    func setTheme(_ themeID: String, of c: MovieCollection, as user: UserAccount) throws
+    /// Закрепляет подборку в профиле (не больше `CollectionRules.profileLimit`).
+    func pin(_ c: MovieCollection, as user: UserAccount) throws
+    func unpin(_ c: MovieCollection, as user: UserAccount) throws
+    /// Меняет порядок закреплённых подборок.
+    func movePinned(from source: IndexSet, to destination: Int, as user: UserAccount) throws
     /// Меняет порядок автора («Порядок автора» в подборке).
     func moveItems(in c: MovieCollection, from source: IndexSet, to destination: Int, as user: UserAccount) throws
 }
@@ -123,4 +129,9 @@ protocol SocialRepository: AnyObject {
     func setSaved(_ saved: Bool, _ collection: MovieCollection, as user: UserAccount) throws
     /// Сохранённые подборки, которые пользователю по-прежнему разрешено видеть; новые сверху.
     func savedCollections(of user: UserAccount) -> [MovieCollection]
+}
+
+enum CollectionRules {
+    /// Сколько подборок и отзывов показывается прямо в профиле; остальные — на экране «все».
+    static let profileLimit = 3
 }

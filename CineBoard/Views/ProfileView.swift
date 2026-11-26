@@ -27,6 +27,7 @@ private struct ProfileContent: View {
     @State private var showEditProfile = false
     @State private var showDeleteAccount = false
     @State private var confirmLogout = false
+    @State private var showPinEditor = false
 
     private var user: UserAccount { model.user }
     private let bannerHeight: CGFloat = 200
@@ -91,6 +92,7 @@ private struct ProfileContent: View {
         }
         .sheet(isPresented: $showEditProfile) { ProfileEditorView() }
         .sheet(isPresented: $showDeleteAccount) { DeleteAccountView() }
+        .sheet(isPresented: $showPinEditor) { FeaturedCollectionsEditor(model: model) }
         .confirmationDialog("Log out of your account?", isPresented: $confirmLogout, titleVisibility: .visible) {
             Button("Log out", role: .destructive) { session.logout() }
             Button("Cancel", role: .cancel) {}
@@ -272,10 +274,16 @@ private struct ProfileContent: View {
     }
 
     private var collectionsSection: some View {
-        let list = model.collections
-        return VStack(alignment: .leading, spacing: 18) {
-            Text(model.isMe ? "My collections" : "Collections").font(.headline)
-            if list.isEmpty {
+        let featured = model.featuredCollections
+        return VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                SectionLink(title: model.isMe ? "My collections" : "Collections", route: .collections(user))
+                Spacer()
+                if model.isMe && !model.collections.isEmpty {
+                    Button("Pin") { showPinEditor = true }.font(.subheadline)
+                }
+            }
+            if featured.isEmpty {
                 Text(
                     model.isMe
                         ? "Create your first collection on the Collections tab."
@@ -283,21 +291,16 @@ private struct ProfileContent: View {
                 )
                 .foregroundStyle(.secondary).font(.subheadline)
             } else {
-                // По одной подборке в строке; обложка слева, затем справа, и так по очереди.
-                VStack(spacing: 30) {
-                    ForEach(Array(list.enumerated()), id: \.element.id) { index, c in
-                        CollectionShowcaseRow(
-                            collection: c, likes: model.likeCount(of: c), mirrored: index % 2 == 1)
-                    }
-                }
+                // По одной подборке в строке; обложки слева, затем справа, и так по очереди.
+                ShowcaseList(model: model, collections: featured)
             }
         }
     }
 
     private var reviewsSection: some View {
-        let list = model.reviews
-        return VStack(alignment: .leading, spacing: 10) {
-            Text(model.isMe ? "My reviews" : "Reviews").font(.headline)
+        let list = model.featuredReviews
+        return VStack(alignment: .leading, spacing: 12) {
+            SectionLink(title: model.isMe ? "My reviews" : "Reviews", route: .reviews(user))
             if list.isEmpty {
                 Text(model.isMe ? "Rate movies and write reviews on their pages." : "No reviews yet.")
                     .foregroundStyle(.secondary).font(.subheadline)
@@ -404,6 +407,41 @@ struct DeleteAccountView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
             .errorAlert($errorMessage)
+        }
+    }
+}
+
+/// Заголовок раздела со стрелкой: нажатие открывает экран со всем списком.
+struct SectionLink: View {
+    let title: LocalizedStringKey
+    let route: ProfileRoute
+
+    var body: some View {
+        NavigationLink(value: route) {
+            HStack(spacing: 5) {
+                Text(title).font(.headline)
+                Image(systemName: "chevron.right").font(.footnote.weight(.bold)).foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityHint("Shows all")
+    }
+}
+
+/// Подборки карточками по очереди: обложки слева, затем справа и так далее.
+struct ShowcaseList: View {
+    let model: ProfileViewModel
+    let collections: [MovieCollection]
+
+    var body: some View {
+        LazyVStack(spacing: 18) {
+            ForEach(Array(collections.enumerated()), id: \.element.id) { index, c in
+                CollectionShowcaseCard(
+                    collection: c, likes: model.likeCount(of: c), mirrored: index % 2 == 1,
+                    showsSave: model.canSave(c), isSaved: model.isSaved(c), onToggleSave: { model.toggleSave(c) })
+            }
         }
     }
 }

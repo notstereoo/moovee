@@ -24,6 +24,13 @@ private struct CollectionEditorContent: View {
                     TextField("What is this collection about", text: $model.details, axis: .vertical).lineLimit(3...6)
                 }
                 Section {
+                    ThemePicker(selection: $model.themeID)
+                } header: {
+                    Text("Color")
+                } footer: {
+                    Text("The card on your profile is painted with this gradient.")
+                }
+                Section {
                     Toggle("Public collection", isOn: $model.isPublic)
                 } footer: {
                     Text(model.isPublic ? "Other users will see it on your profile." : "Visible only to you.")
@@ -44,6 +51,45 @@ private struct CollectionEditorContent: View {
                 }
             }
             .errorAlert($model.errorMessage)
+        }
+    }
+}
+
+/// Выбор цветовой темы подборки.
+private struct ThemePicker: View {
+    @Binding var selection: String
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 14) {
+                ForEach(CollectionTheme.all) { theme in
+                    Button {
+                        selection = theme.id
+                    } label: {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [theme.top, theme.bottom], startPoint: .topLeading,
+                                    endPoint: .bottomTrailing)
+                            )
+                            .frame(width: 46, height: 46)
+                            .overlay {
+                                if selection == theme.id {
+                                    Image(systemName: "checkmark").font(.subheadline.weight(.bold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                            .overlay(
+                                Circle().stroke(Color.primary.opacity(selection == theme.id ? 0.9 : 0), lineWidth: 2)
+                                    .padding(-4))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(theme.name)
+                    .accessibilityAddTraits(selection == theme.id ? .isSelected : [])
+                }
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 4)
         }
     }
 }
